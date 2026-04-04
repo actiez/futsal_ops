@@ -12,12 +12,11 @@
         <p><strong>Location:</strong> {{ event.location }}</p>
         <p><strong>Price:</strong> ${{ event.amount_payable }}</p>
 
-        <form method="post" class="mt-6">
-            {% csrf_token %}
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
-                Confirm Join
-            </button>
-        </form>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirm Join</button>
+</form>
+
     </div>
 </div>
 {% endblock %}

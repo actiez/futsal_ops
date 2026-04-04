@@ -130,4 +130,50 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
 @login_required
 def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
-    return render(request, "registrations/join_page.html", {"event": event})
+
+    if timezone.now() >= event.start_datetime:
+        return render(
+            request,
+            "registrations/join_closed.html",
+            {"event": event},
+        )
+
+    if request.method == "POST":
+        registration, created = register_user_for_event(
+            event,
+            request.user,
+            changed_by=request.user,
+        )
+
+        if created:
+            messages.success(request, f"You joined as {registration.status}.")
+        else:
+            messages.info(
+                request,
+                f"You are already registered as {registration.status}.",
+            )
+
+        return render(
+            request,
+            "registrations/join_success.html",
+            {
+                "event": event,
+                "registration": registration,
+                "created": created,
+            },
+        )
+
+    existing_registration = (
+        EventRegistration.objects
+        .filter(event=event, user=request.user)
+        .first()
+    )
+
+    return render(
+        request,
+        "registrations/join_page.html",
+        {
+            "event": event,
+            "existing_registration": existing_registration,
+        },
+    )
