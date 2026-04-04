@@ -7,7 +7,7 @@ from django.utils import timezone
 from events.models import Event
 
 from .forms import UserRegisterForm
-
+from registrations.models import EventRegistration
 
 class RegisterView(View):
     template_name = "accounts/register.html"
@@ -54,7 +54,6 @@ class RegisterView(View):
             },
         )
 
-
 class PlayerHomeView(View):
     template_name = "accounts/player_home.html"
 
@@ -62,13 +61,28 @@ class PlayerHomeView(View):
         if not request.user.is_authenticated:
             return redirect("login")
 
-        upcoming_events = Event.objects.filter(
-            start_datetime__gt=timezone.now()
-        ).order_by("start_datetime")
+        upcoming_events = list(
+            Event.objects.filter(start_datetime__gt=timezone.now()).order_by("start_datetime")
+        )
 
-        return render(request, self.template_name, {
-            "events": upcoming_events
-        })
+        user_registrations = EventRegistration.objects.filter(
+            user=request.user,
+            event__in=upcoming_events,
+        ).select_related("event")
+
+        registration_map = {reg.event_id: reg for reg in user_registrations}
+
+        for event in upcoming_events:
+            event.user_registration = registration_map.get(event.id)
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "events": upcoming_events,
+                "now": timezone.now(),
+            },
+        )
 
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"
