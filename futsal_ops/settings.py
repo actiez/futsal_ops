@@ -122,7 +122,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-LOGIN_REDIRECT_URL = "player_home"
+LOGIN_REDIRECT_URL = "event)list"
 LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"
 
