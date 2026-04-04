@@ -126,69 +126,12 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
 
 
 @login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from events.models import Event
+
 def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
-    registration = EventRegistration.objects.filter(event=event, user=request.user).first()
-
-    registration_closed = timezone.now() >= event.start_datetime
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "join":
-            if registration_closed:
-                return render(
-                    request,
-                    "registrations/join_closed.html",
-                    {"event": event},
-                    status=403,
-                )
-
-            registration, created = register_user_for_event(
-                event,
-                request.user,
-                changed_by=request.user,
-            )
-
-            if created:
-                messages.success(request, "You have joined the game.")
-            else:
-                messages.info(request, "You are already registered for this game.")
-
-            return redirect("join_event", token=event.registration_token)
-
-        if action == "leave":
-            registration = EventRegistration.objects.filter(
-                event=event,
-                user=request.user,
-            ).first()
-
-            if registration:
-                registration.delete()
-                rebalance_event_slots(event, changed_by=request.user)
-                messages.success(request, "You have left the game.")
-
-            return redirect("join_event", token=event.registration_token)
-
-    registration = EventRegistration.objects.filter(event=event, user=request.user).first()
-
-    waiting_position = None
-    if registration and registration.status == EventRegistration.STATUS_WAITING:
-        waiting_position = (
-            EventRegistration.objects.filter(
-                event=event,
-                status=EventRegistration.STATUS_WAITING,
-                sequence_number__lte=registration.sequence_number,
-            ).count()
-        )
-
-    return render(
-        request,
-        "registrations/join_page.html",
-        {
-            "event": event,
-            "registration": registration,
-            "registration_closed": registration_closed,
-            "waiting_position": waiting_position,
-        },
+    return HttpResponse(
+        f"Join route works. Event: {event.id} | User authenticated: {request.user.is_authenticated}"
     )
