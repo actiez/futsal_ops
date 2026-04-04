@@ -9,4 +9,5 @@ urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
     path("events/", include("events.urls")),
+    path("registrations/", include("registrations.urls")),
 ]
