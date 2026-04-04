@@ -12,6 +12,13 @@
             <div class="flex items-center gap-4">
                 {% if request.user.is_authenticated %}
                     <span class="text-sm text-gray-600">{{ request.user.username }}</span>
+
+                    <form method="post" action="/logout/">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">
+                            Logout
+                        </button>
+                    </form>
                 {% else %}
                     <a href="/login/" class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                         Login
@@ -25,7 +32,9 @@
         {% if messages %}
             <div class="mb-6 space-y-2">
                 {% for message in messages %}
-                    <div>{{ message }}</div>
+                    <div class="px-4 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm">
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}

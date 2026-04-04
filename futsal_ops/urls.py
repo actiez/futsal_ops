@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 
 def home(request):
-    return redirect("player_home")
+    return redirect("/home/")
 
 urlpatterns = [
     path("", home, name="home"),
