@@ -2,6 +2,7 @@ from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
+from django.urls import reverse
 
 from .forms import UserRegisterForm
 
@@ -39,7 +40,7 @@ class RegisterView(View):
             messages.success(request, "Account created successfully. Please log in.")
 
             if next_url:
-                return redirect(f"{redirect('login').url}?next={next_url}")
+                return redirect(f"{reverse('login')}?next={next_url}")
             return redirect("login")
 
         return render(
@@ -50,7 +51,7 @@ class RegisterView(View):
                 "next_url": next_url,
             },
         )
-    
+
 
 class PlayerHomeView(View):
     template_name = "accounts/player_home.html"
@@ -59,20 +60,20 @@ class PlayerHomeView(View):
         if not request.user.is_authenticated:
             return redirect("login")
         return render(request, self.template_name)
-    
-    
+
+
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return self._redirect_user(request.user)
+            return redirect(self._redirect_user(request.user))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
-        return self._redirect_user(self.request.user)
+        return reverse(self._redirect_user(self.request.user))
 
     def _redirect_user(self, user):
         if user.is_admin_level():
-            return "/events/"   # or reverse("event_list")
-        return "/home/"         # or reverse("player_home")
+            return "event_list"
+        return "player_home"
