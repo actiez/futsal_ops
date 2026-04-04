@@ -4,10 +4,50 @@ from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.urls import reverse
 from django.utils import timezone
+
 from events.models import Event
+from registrations.models import EventRegistration
 
 from .forms import UserRegisterForm
-from registrations.models import EventRegistration
+
+
+def get_player_visible_status(registration, event):
+    if not registration:
+        return None
+
+    if registration.status == EventRegistration.STATUS_PLAYING:
+        return {
+            "label": "Playing",
+            "message": "You are in the playing list.",
+            "queue_number": None,
+        }
+
+    if registration.status == EventRegistration.STATUS_WAITING:
+        waiting_regs = (
+            event.registrations
+            .filter(status=EventRegistration.STATUS_WAITING)
+            .order_by("sequence_number", "id")
+        )
+
+        queue_number = 1
+        for reg in waiting_regs:
+            if reg.id == registration.id:
+                break
+            queue_number += 1
+
+        return {
+            "label": "Waiting",
+            "message": "You are in the waiting list.",
+            "queue_number": queue_number,
+        }
+
+    # interested and backup are both player-facing "Pending"
+    return {
+        "label": "Pending",
+        "message": "Your status is pending.",
+        "queue_number": None,
+    }
+
 
 class RegisterView(View):
     template_name = "accounts/register.html"
@@ -61,38 +101,35 @@ class PlayerHomeView(View):
     def get(self, request):
         if not request.user.is_authenticated:
             return redirect("login")
-        return render(request, self.template_name)
 
-
-class PlayerHomeView(View):
-    template_name = "accounts/player_home.html"
-
-    def get(self, request):
-        if not request.user.is_authenticated:
-            return redirect("login")
+        now = timezone.now()
 
         upcoming_events = list(
-            Event.objects.filter(start_datetime__gt=timezone.now()).order_by("start_datetime")
+            Event.objects.filter(start_datetime__gt=now).order_by("start_datetime")
         )
 
-        user_registrations = EventRegistration.objects.filter(
-            user=request.user,
-            event__in=upcoming_events,
-        ).select_related("event")
+        user_registrations = (
+            EventRegistration.objects
+            .filter(user=request.user, event__in=upcoming_events)
+            .select_related("event")
+        )
 
         registration_map = {reg.event_id: reg for reg in user_registrations}
 
         for event in upcoming_events:
-            event.user_registration = registration_map.get(event.id)
+            reg = registration_map.get(event.id)
+            event.user_registration = reg
+            event.player_visible_status = get_player_visible_status(reg, event)
 
         return render(
             request,
             self.template_name,
             {
                 "events": upcoming_events,
-                "now": timezone.now(),
+                "now": now,
             },
         )
+
 
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"
