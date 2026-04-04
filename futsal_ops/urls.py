@@ -2,8 +2,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from accounts.views import RegisterView, PlayerHomeView, CustomLoginView
+from django.shortcuts import redirect
 
 urlpatterns = [
+    path("", home_redirect),
     path("admin/", admin.site.urls),
     path("", include("dashboard.urls")),
     path("events/", include("events.urls")),
@@ -14,3 +16,6 @@ urlpatterns = [
     path("home/", PlayerHomeView.as_view(), name="player_home"),
     
 ]
+
+def home_redirect(request):
+    return redirect("event_list") # or 'player_home'
