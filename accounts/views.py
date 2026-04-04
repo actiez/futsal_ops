@@ -15,17 +15,17 @@ def get_player_visible_status(registration, event):
     if not registration:
         return None
 
-    if registration.status == EventRegistration.STATUS_PLAYING:
+    if registration.status == "playing":
         return {
             "label": "Playing",
             "message": "You are in the playing list.",
             "queue_number": None,
         }
 
-    if registration.status == EventRegistration.STATUS_WAITING:
+    if registration.status == "waiting":
         waiting_regs = (
             event.registrations
-            .filter(status=EventRegistration.STATUS_WAITING)
+            .filter(status="waiting")
             .order_by("sequence_number", "id")
         )
 
