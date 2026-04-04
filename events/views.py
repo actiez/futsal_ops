@@ -11,7 +11,7 @@ from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
 
-class EventListView(AdminRequiredMixin, ListView):
+class EventListView(ListView):
     model = Event
     template_name = "events/list.html"
     context_object_name = "events"
