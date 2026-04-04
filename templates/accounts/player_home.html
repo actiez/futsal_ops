@@ -3,15 +3,34 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto mt-12">
-    <div class="bg-white p-8 rounded-2xl shadow">
-        <h1 class="text-2xl font-bold mb-4">Welcome</h1>
-        <p class="text-gray-600">
-            You are logged in.
-        </p>
-        <p class="text-gray-600 mt-2">
-            Use your registration link to join or manage your game status.
-        </p>
+<div class="max-w-5xl mx-auto">
+
+    <h1 class="text-2xl font-bold mb-6">Upcoming Games</h1>
+
+    <div class="space-y-4">
+        {% for event in events %}
+        <div class="bg-white p-5 rounded-2xl shadow">
+
+            <div class="font-semibold text-lg">
+                {{ event.weekday_display }}, {{ event.date_display }}
+            </div>
+
+            <div class="text-sm text-gray-600">
+                {{ event.time_range_display }} · {{ event.location }}
+            </div>
+
+            <div class="mt-3">
+                <a href="/registrations/join/{{ event.registration_token }}/"
+                   class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                    Join Game
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="text-gray-500">No upcoming games</div>
+        {% endfor %}
     </div>
+
 </div>
 {% endblock %}

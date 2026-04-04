@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.urls import reverse
+from django.utils import timezone
+from events.models import Event
 
 from .forms import UserRegisterForm
 
@@ -53,16 +55,20 @@ class RegisterView(View):
         )
 
 
-from django.http import HttpResponse
-
 class PlayerHomeView(View):
+    template_name = "accounts/player_home.html"
+
     def get(self, request):
         if not request.user.is_authenticated:
             return redirect("login")
-        return HttpResponse(
-            f"user={request.user.username}, staff={request.user.is_staff}, superuser={request.user.is_superuser}"
-        )
 
+        upcoming_events = Event.objects.filter(
+            start_datetime__gt=timezone.now()
+        ).order_by("start_datetime")
+
+        return render(request, self.template_name, {
+            "events": upcoming_events
+        })
 
 class CustomLoginView(LoginView):
     template_name = "accounts/login.html"

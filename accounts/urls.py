@@ -7,4 +7,5 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(next_page="login"), name="logout"),
     path("register/", RegisterView.as_view(), name="register"),
     path("home/", PlayerHomeView.as_view(), name="player_home"),
+    path("join/<uuid:token>/", join_event, name="join_event")
 ]
