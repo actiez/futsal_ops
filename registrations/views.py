@@ -9,6 +9,8 @@ from core.mixins import AdminRequiredMixin
 from django.db.models import Q
 from events.models import Event
 
+from django.http import HttpResponse
+
 from .forms import EventRegistrationAdminForm
 from .models import EventRegistration
 from .services import (
@@ -126,10 +128,6 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
 
 
 @login_required
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from events.models import Event
-
 def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
     return HttpResponse(
