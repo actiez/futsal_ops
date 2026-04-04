@@ -127,6 +127,44 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
         return redirect("event_detail", pk=event.pk)
 
 
+def _get_player_visible_status(registration, event):
+    if not registration:
+        return None
+
+    if registration.status == EventRegistration.STATUS_PLAYING:
+        return {
+            "label": "Playing",
+            "message": "You are in the playing list.",
+            "queue_number": None,
+        }
+
+    if registration.status == EventRegistration.STATUS_WAITING:
+        waiting_regs = (
+            event.registrations
+            .filter(status=EventRegistration.STATUS_WAITING)
+            .order_by("sequence_number", "created_at", "id")
+        )
+
+        queue_number = 1
+        for reg in waiting_regs:
+            if reg.id == registration.id:
+                break
+            queue_number += 1
+
+        return {
+            "label": "Waiting",
+            "message": "You are in the waiting list.",
+            "queue_number": queue_number,
+        }
+
+    # interested and backup are both player-facing "Pending"
+    return {
+        "label": "Pending",
+        "message": "Your status is pending.",
+        "queue_number": None,
+    }
+
+
 @login_required
 def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
@@ -144,22 +182,68 @@ def join_event(request, token):
         .first()
     )
 
+    visible_status = _get_player_visible_status(existing_registration, event)
+
     if request.method == "POST":
-        if existing_registration:
-            messages.info(
-                request,
-                f"You are already registered as {existing_registration.status}.",
+        action = request.POST.get("action")
+
+        if action == "join":
+            if existing_registration:
+                messages.info(request, "You are already registered for this event.")
+                return redirect("join_event", token=event.registration_token)
+
+            registration, created = register_user_for_event(
+                event,
+                request.user,
+                changed_by=request.user,
             )
+
+            visible_status = _get_player_visible_status(registration, event)
+
+            if visible_status["label"] == "Playing":
+                messages.success(request, "You are in the playing list.")
+            elif visible_status["label"] == "Waiting":
+                messages.success(
+                    request,
+                    f"You are in the waiting list. You are currently #{visible_status['queue_number']} in the waiting list.",
+                )
+            else:
+                messages.success(
+                    request,
+                    "Your status is pending. Pending means you may move into the waiting list when a slot opens, subject to queue.",
+                )
+
             return redirect("join_event", token=event.registration_token)
 
-        registration, created = register_user_for_event(
-            event,
-            request.user,
-            changed_by=request.user,
-        )
+        if action == "leave_warn":
+            if not existing_registration:
+                messages.warning(request, "You are not registered for this event.")
+                return redirect("join_event", token=event.registration_token)
 
-        messages.success(request, f"You joined as {registration.status}.")
-        return redirect("join_event", token=event.registration_token)
+            return render(
+                request,
+                "registrations/join_page.html",
+                {
+                    "event": event,
+                    "existing_registration": existing_registration,
+                    "visible_status": visible_status,
+                    "leave_confirm_stage": True,
+                },
+            )
+
+        if action == "leave_confirm":
+            if not existing_registration:
+                messages.warning(request, "You are not registered for this event.")
+                return redirect("join_event", token=event.registration_token)
+
+            existing_registration.delete()
+            rebalance_event_slots(event, changed_by=request.user)
+
+            messages.success(
+                request,
+                "You have left the game. If you join again later, you will need to queue again.",
+            )
+            return redirect("join_event", token=event.registration_token)
 
     return render(
         request,
@@ -167,5 +251,7 @@ def join_event(request, token):
         {
             "event": event,
             "existing_registration": existing_registration,
+            "visible_status": visible_status,
+            "leave_confirm_stage": False,
         },
     )
