@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+    <p class="text-gray-600 mt-2">Admin control center for your events and users.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-2xl shadow p-6">
+        <div class="text-sm text-gray-500">Upcoming Events</div>
+        <div class="text-3xl font-bold mt-2">{{ upcoming_events_count }}</div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <div class="text-sm text-gray-500">Past Events</div>
+        <div class="text-3xl font-bold mt-2">{{ past_events_count }}</div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <div class="text-sm text-gray-500">Total Users</div>
+        <div class="text-3xl font-bold mt-2">{{ total_users_count }}</div>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Recent Events</h2>
+
+    {% if recent_events %}
+        <div class="space-y-3">
+            {% for event in recent_events %}
+                <div class="border rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <div class="font-semibold text-gray-900">{{ event.title }}</div>
+                        <div class="text-sm text-gray-500">
+                            {{ event.weekday_display }}, {{ event.date_display }} • {{ event.time_range_display }}
+                        </div>
+                    </div>
+                    <div class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+                        {{ event.effective_status }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-500">No events yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

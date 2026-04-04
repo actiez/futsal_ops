@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Event Detail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6">
+
+<div class="max-w-6xl mx-auto">
+
+    <!-- Top Bar -->
+<div class="flex justify-between items-center mb-6">
+    <a href="{% url 'event_list' %}" class="px-4 py-2 bg-gray-200 rounded-xl">
+        ← Back
+    </a>
+
+    <div class="flex gap-2">
+        {% if not registration_closed and event.effective_status != "completed" and event.effective_status != "cancelled" %}
+            <a href="{% url 'registration_add' event.id %}" class="px-4 py-2 bg-green-600 text-white rounded-xl">
+                + Add Player
+            </a>
+        {% endif %}
+
+        <a href="{% url 'event_edit' event.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-xl">
+            Edit Event
+        </a>
+
+<a href="{% url 'event_delete' event.id %}"
+   class="px-4 py-2 bg-red-600 text-white rounded-xl">
+   Delete
+</a>
+
+    </div>
+
+</div>
+    <!-- Event Info -->
+    <div class="bg-white p-6 rounded-2xl shadow mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-xl font-bold">
+                {{ event.weekday_display }}, {{ event.date_display }}
+            </h1>
+
+            <div class="text-sm px-3 py-1 rounded-full
+     {% if event.effective_status == 'completed' %}
+    bg-gray-800 text-white
+{% elif event.effective_status == 'full' %}
+    bg-red-100 text-red-700
+{% elif event.effective_status == 'playing_full' %}
+    bg-yellow-100 text-yellow-700
+{% else %}
+    bg-green-100 text-green-700
+{% endif %}
+            ">
+                {{ event.effective_status_label }}
+            </div>
+        </div>
+
+        <div class="text-gray-600">
+            {{ event.time_range_display }} · {{ event.location }}
+        </div>
+
+        <div class="text-gray-600 mt-1">
+            ${{ event.amount_payable }} per pax
+        </div>
+    </div>
+
+<div class="bg-white p-4 rounded-2xl shadow mb-6">
+    <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <div class="text-sm text-gray-500">Registration Link</div>
+
+        {% if not registration_closed %}
+            <button onclick="copyInvite()"
+                    class="px-3 py-2 bg-green-600 text-white rounded-xl text-sm hover:bg-green-700">
+                Copy Invite
+            </button>
+        {% endif %}
+    </div>
+
+    {% if registration_closed %}
+        <div class="text-sm text-red-600 font-medium">Registration closed</div>
+    {% else %}
+        <div class="text-sm break-all text-blue-700">{{ join_url }}</div>
+        <textarea id="inviteText" class="hidden">{{ invite_text }}</textarea>
+    {% endif %}
+</div>
+
+    <!-- Players Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        {% include "events/_player_column.html" with title="Interested" players=interested_regs %}
+        {% include "events/_player_column.html" with title="Playing" players=playing_regs %}
+        {% include "events/_player_column.html" with title="Waiting" players=waiting_regs %}
+        {% include "events/_player_column.html" with title="Backup" players=backup_regs %}
+
+    </div>
+
+    <!-- WhatsApp Summary -->
+    <div class="mt-8 bg-white rounded-2xl shadow p-5">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 class="text-lg font-semibold">WhatsApp Summary</h2>
+
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="showSummary('full')" class="px-3 py-2 border rounded-xl text-sm">
+                    Full
+                </button>
+
+                <button onclick="showSummary('reminder')" class="px-3 py-2 border rounded-xl text-sm">
+                    Reminder
+                </button>
+
+                <button onclick="copySummary()" class="px-3 py-2 bg-green-600 text-white rounded-xl text-sm">
+                    Copy
+                </button>
+            </div>
+        </div>
+
+        <textarea id="summary" rows="14"
+            class="w-full border rounded-xl p-4 bg-gray-50 text-sm"
+            readonly>{{ whatsapp_summary }}</textarea>
+    </div>
+<div class="mt-8 bg-white rounded-2xl shadow p-5">
+    <h2 class="text-lg font-semibold mb-4">Recent Activity</h2>
+
+    {% if status_logs %}
+        <div class="space-y-3">
+            {% for log in status_logs %}
+                <div class="border rounded-xl p-3">
+                    <div class="font-medium">
+                        {{ log.registration.user.get_full_name|default:log.registration.user.username }}
+                    </div>
+
+                    <div class="text-sm text-gray-600 mt-1">
+                        {% if log.old_status %}
+                            {{ log.old_status }} → {{ log.new_status }}
+                        {% else %}
+                            added as {{ log.new_status }}
+                        {% endif %}
+                    </div>
+
+                    <div class="text-xs text-gray-400 mt-1">
+                        by {{ log.changed_by.username|default:"system" }} · {{ log.changed_at|date:"d M Y, g:i A" }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-sm text-gray-500">No activity yet.</p>
+    {% endif %}
+</div>
+</div>
+
+
+
+<!-- Toast -->
+<div id="toast"
+     class="hidden fixed bottom-6 right-6 bg-black text-white px-4 py-2 rounded-xl text-sm">
+    Copied
+</div>
+
+<script>
+const full = `{{ whatsapp_summary|escapejs }}`;
+const reminder = `{{ whatsapp_reminder_summary|escapejs }}`;
+
+function showSummary(type) {
+    document.getElementById("summary").value =
+        type === "reminder" ? reminder : full;
+}
+
+function copySummary() {
+    const el = document.getElementById("summary");
+
+    navigator.clipboard.writeText(el.value).then(() => {
+        const toast = document.getElementById("toast");
+        toast.classList.remove("hidden");
+
+        setTimeout(() => toast.classList.add("hidden"), 1500);
+    });
+}
+</script>
+
+<script>
+function copyInvite() {
+    const text = document.getElementById("inviteText").value;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById("toast");
+        toast.textContent = "Invite copied";
+        toast.classList.remove("hidden");
+
+        setTimeout(() => {
+            toast.classList.add("hidden");
+            toast.textContent = "Copied";
+        }, 1500);
+    });
+}
+</script>
+</body>
+</html>

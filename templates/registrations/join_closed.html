@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Closed{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10">
+    <div class="bg-white rounded-2xl shadow p-8 text-center">
+        <h1 class="text-2xl font-bold mb-3">Registration Closed</h1>
+        <p class="text-gray-600 mb-4">
+            The registration link for <span class="font-semibold">{{ event.title }}</span> has expired.
+        </p>
+        <p class="text-sm text-gray-500">
+            Event starts on {{ event.weekday_display }}, {{ event.date_display }} at {{ event.time_range_display }}.
+        </p>
+    </div>
+</div>
+{% endblock %}

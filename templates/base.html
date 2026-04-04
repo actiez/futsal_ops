@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Futsal Ops{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+
+            {% if request.user.is_authenticated and request.user.is_admin_level %}
+                {% url 'event_list' as home_url %}
+            {% else %}
+                {% url 'player_home' as home_url %}
+            {% endif %}
+
+            <a href="{{ home_url }}" class="text-xl font-bold text-gray-900">
+                Futsal Ops
+            </a>
+
+            <div class="flex items-center gap-4">
+                {% if request.user.is_authenticated %}
+                    <span class="text-sm text-gray-600">
+                        {{ request.user.username }}
+                    </span>
+
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">
+                            Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+                        Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="px-4 py-3 rounded-xl text-sm
+                        {% if message.tags == 'success' %} bg-green-100 text-green-700
+                        {% elif message.tags == 'warning' %} bg-yellow-100 text-yellow-700
+                        {% elif message.tags == 'error' %} bg-red-100 text-red-700
+                        {% else %} bg-gray-100 text-gray-700 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

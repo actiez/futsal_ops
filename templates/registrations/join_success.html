@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-2xl shadow p-8 text-center">
+        <h1 class="text-2xl font-bold mb-3">
+            {% if created %}Registration Successful{% else %}Already Registered{% endif %}
+        </h1>
+
+        <p class="text-gray-600 mb-4">
+            {% if created %}
+                You have joined <span class="font-semibold">{{ event.title }}</span>
+                as <span class="font-semibold">{{ registration.status }}</span>.
+            {% else %}
+                You are already registered for
+                <span class="font-semibold">{{ event.title }}</span>.
+            {% endif %}
+        </p>
+
+        <p class="text-sm text-gray-500 mb-6">
+            {{ event.weekday_display }}, {{ event.date_display }}<br>
+            {{ event.time_range_display }}<br>
+            {{ event.location }}
+        </p>
+
+        <a href="/" class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50">
+            Done
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1 @@
+web: gunicorn futsal_ops.wsgi

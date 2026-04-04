@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Join Game{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-8">
+    <div class="bg-white p-8 rounded-2xl shadow">
+
+        <h1 class="text-2xl font-bold mb-3">⚽ {{ event.title|default:"Futsal Session" }}</h1>
+
+        <p class="text-gray-600 mb-6">
+            {{ event.weekday_display }}, {{ event.date_display }}<br>
+            {{ event.time_range_display }}<br>
+            {{ event.location }}<br>
+            ${{ event.amount_payable }} per pax
+        </p>
+
+	<div class="mb-6 text-sm text-gray-600">
+   		Playing: {{ event.registrations.filter(status='playing').count }} /
+	        {{ event.max_players }}<br>
+
+	        Waiting: {{ event.registrations.filter(status='waiting').count }} /
+	        {{ event.waiting_list_limit }}
+	</div>
+
+        <div class="mb-6 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm space-y-1">
+            <div class="font-semibold">Important</div>
+            <div>Slots are allocated automatically.</div>
+            <div>If you leave and join again later, you will need to queue again.</div>
+        </div>
+
+        {% if registration_closed %}
+            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
+                Registration is closed. This session has reached its start time.
+            </div>
+        {% endif %}
+
+        {% if registration %}
+            <div class="mb-6 p-4 rounded-xl bg-gray-50 border">
+                <div class="text-sm text-gray-500 mb-1">Your current status</div>
+                <div class="text-lg font-semibold">{{ registration.status|upper }}</div>
+
+                {% if registration.status == "waiting" and waiting_position %}
+                    <div class="mt-2 text-sm text-gray-600">
+                        You are currently <span class="font-semibold">#{{ waiting_position }}</span> in the waiting list.
+                    </div>
+		    <div class="mt-2 text-xs text-gray-500">
+    			Players are automatically moved up when slots become available.
+		    </div>
+		    <div class="mt-2 text-xs text-yellow-600">
+   			 Stay ready. Movement can happen anytime before game starts.
+		    </div>
+                {% elif registration.status == "playing" %}
+                    <div class="mt-2 text-sm text-green-700 font-medium">
+                        You are in the playing list.
+                    </div>
+                {% elif registration.status == "interested" %}
+                    <div class="mt-2 text-sm text-gray-700">
+                        Your status is pending.
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500">
+                        Pending means you may move into the waiting list when a slot opens, subject to queue.
+                    </div>
+                {% elif registration.status == "backup" %}
+                    <div class="mt-2 text-sm text-gray-700">
+                        You are in the backup list.
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="post" onsubmit="return confirmLeaveFlow();">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="leave">
+                <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700">
+                    Leave Game
+                </button>
+            </form>
+
+        {% else %}
+            {% if not registration_closed %}
+                <div class="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800">
+                    Click below to express interest to join the game.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="join">
+                    <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700">
+                        Join Game
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+function confirmLeaveFlow() {
+    const first = confirm("If you wish to join the game again later, you will need to queue again. Do you want to continue?");
+    if (!first) return false;
+
+    const second = confirm("Please confirm that you want to leave the game.");
+    return second;
+}
+</script>
+{% endblock %}

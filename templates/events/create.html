@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'event_list' %}" class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50">
+        ← Back to Events
+    </a>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold">Create Event</h1>
+        <p class="text-gray-600 mt-2">Set up a new event. Default values are pre-filled and can be changed.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Date</label>
+                    {{ form.event_date }}
+                    {% if form.event_date.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.event_date.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Start Time</label>
+                    {{ form.start_time }}
+                    {% if form.start_time.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.start_time.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">End Time</label>
+                    {{ form.end_time }}
+                    {% if form.end_time.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.end_time.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Location</label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.location.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Amount Payable</label>
+                {{ form.amount_payable }}
+                {% if form.amount_payable.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.amount_payable.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium mb-2">Playing Slots</label>
+        {{ form.playing_slots }}
+        {% if form.playing_slots.errors %}
+            <div class="text-red-600 text-sm mt-1">{{ form.playing_slots.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-2">Waiting Slots</label>
+        {{ form.waiting_slots }}
+        {% if form.waiting_slots.errors %}
+            <div class="text-red-600 text-sm mt-1">{{ form.waiting_slots.errors }}</div>
+        {% endif %}
+    </div>
+</div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">Status</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                    <div class="text-red-600 text-sm mt-1">{{ form.status.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center gap-3 pt-4">
+                <button type="submit" class="bg-black text-white px-5 py-3 rounded-xl">
+                    Save Event
+                </button>
+                <a href="{% url 'event_list' %}" class="px-5 py-3 rounded-xl border">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
