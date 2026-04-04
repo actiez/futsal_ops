@@ -54,6 +54,16 @@ class RegisterView(View):
             },
         )
 
+
+class PlayerHomeView(View):
+    template_name = "accounts/player_home.html"
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect("login")
+        return render(request, self.template_name)
+
+
 class PlayerHomeView(View):
     template_name = "accounts/player_home.html"
 
@@ -89,10 +99,16 @@ class CustomLoginView(LoginView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
+            next_url = request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
             return redirect(self._redirect_user(request.user))
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
+        next_url = self.get_redirect_url()
+        if next_url:
+            return next_url
         return reverse(self._redirect_user(self.request.user))
 
     def _redirect_user(self, user):
