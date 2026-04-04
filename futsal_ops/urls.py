@@ -2,9 +2,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from django.http import HttpResponse
 
 def home_redirect(request):
-    return redirect("player_home")
+    return HttpResponse("Futsal Ops is LIVE 🚀")
+
+#def home_redirect(request):
+#    return redirect("player_home")
 
 urlpatterns = [
     path("", home_redirect, name="home"),
