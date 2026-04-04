@@ -6,5 +6,4 @@ urlpatterns = [
     path("<int:pk>/move/<str:status>/", RegistrationStatusUpdateView.as_view(), name="registration_move"),
     path("join/<uuid:token>/", join_event, name="join_event"),
     path("<int:pk>/delete/", RegistrationDeleteView.as_view(), name="registration_delete"),
-    path("join/<uuid:token>/", join_event, name="join_event"),
 ]

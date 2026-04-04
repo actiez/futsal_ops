@@ -124,7 +124,7 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = "event)list"
 LOGOUT_REDIRECT_URL = "login"
-LOGIN_URL = "login"
+LOGIN_URL = "/login/"
 
 
 # Static files (CSS, JavaScript, Images)
