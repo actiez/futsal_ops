@@ -4,19 +4,33 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
-    <div class="bg-white p-6 rounded-2xl shadow">
-        <h1 class="text-2xl font-bold mb-4">Join Event</h1>
+    <div class="bg-white p-6 rounded-2xl shadow text-center">
+        {% if existing_registration %}
+            <h1 class="text-2xl font-bold mb-4">Already Registered</h1>
+            <p class="mb-2">
+                You are already registered for {{ event.title }}.
+            </p>
+            <p class="mb-6 text-sm text-gray-600">
+                Status: {{ existing_registration.status }}
+            </p>
+            <a href="/home/" class="px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">
+                Done
+            </a>
+        {% else %}
+            <h1 class="text-2xl font-bold mb-4">Join Event</h1>
 
-        <p><strong>Date:</strong> {{ event.weekday_display }}, {{ event.date_display }}</p>
-        <p><strong>Time:</strong> {{ event.time_range_display }}</p>
-        <p><strong>Location:</strong> {{ event.location }}</p>
-        <p><strong>Price:</strong> ${{ event.amount_payable }}</p>
+            <p><strong>Date:</strong> {{ event.weekday_display }}, {{ event.date_display }}</p>
+            <p><strong>Time:</strong> {{ event.time_range_display }}</p>
+            <p><strong>Location:</strong> {{ event.location }}</p>
+            <p class="mb-6"><strong>Price:</strong> ${{ event.amount_payable }}</p>
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Confirm Join</button>
-</form>
-
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                    Confirm Join
+                </button>
+            </form>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

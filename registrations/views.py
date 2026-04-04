@@ -138,36 +138,28 @@ def join_event(request, token):
             {"event": event},
         )
 
+    existing_registration = (
+        EventRegistration.objects
+        .filter(event=event, user=request.user)
+        .first()
+    )
+
     if request.method == "POST":
+        if existing_registration:
+            messages.info(
+                request,
+                f"You are already registered as {existing_registration.status}.",
+            )
+            return redirect("join_event", token=event.registration_token)
+
         registration, created = register_user_for_event(
             event,
             request.user,
             changed_by=request.user,
         )
 
-        if created:
-            messages.success(request, f"You joined as {registration.status}.")
-        else:
-            messages.info(
-                request,
-                f"You are already registered as {registration.status}.",
-            )
-
-        return render(
-            request,
-            "registrations/join_success.html",
-            {
-                "event": event,
-                "registration": registration,
-                "created": created,
-            },
-        )
-
-    existing_registration = (
-        EventRegistration.objects
-        .filter(event=event, user=request.user)
-        .first()
-    )
+        messages.success(request, f"You joined as {registration.status}.")
+        return redirect("join_event", token=event.registration_token)
 
     return render(
         request,
