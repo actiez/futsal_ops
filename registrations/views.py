@@ -127,22 +127,22 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
         return redirect("event_detail", pk=event.pk)
 
 
-def _get_player_visible_status(registration, event):
+def get_player_visible_status(registration, event):
     if not registration:
         return None
 
-    if registration.status == EventRegistration.STATUS_PLAYING:
+    if registration.status == "playing":
         return {
             "label": "Playing",
             "message": "You are in the playing list.",
             "queue_number": None,
         }
 
-    if registration.status == EventRegistration.STATUS_WAITING:
+    if registration.status == "waiting":
         waiting_regs = (
             event.registrations
-            .filter(status=EventRegistration.STATUS_WAITING)
-            .order_by("sequence_number", "created_at", "id")
+            .filter(status="waiting")
+            .order_by("sequence_number", "id")
         )
 
         queue_number = 1
@@ -157,7 +157,6 @@ def _get_player_visible_status(registration, event):
             "queue_number": queue_number,
         }
 
-    # interested and backup are both player-facing "Pending"
     return {
         "label": "Pending",
         "message": "Your status is pending.",
@@ -170,11 +169,7 @@ def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
 
     if timezone.now() >= event.start_datetime:
-        return render(
-            request,
-            "registrations/join_closed.html",
-            {"event": event},
-        )
+        return render(request, "registrations/join_closed.html", {"event": event})
 
     existing_registration = (
         EventRegistration.objects
@@ -182,7 +177,7 @@ def join_event(request, token):
         .first()
     )
 
-    visible_status = _get_player_visible_status(existing_registration, event)
+    visible_status = get_player_visible_status(existing_registration, event)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -198,7 +193,7 @@ def join_event(request, token):
                 changed_by=request.user,
             )
 
-            visible_status = _get_player_visible_status(registration, event)
+            visible_status = get_player_visible_status(registration, event)
 
             if visible_status["label"] == "Playing":
                 messages.success(request, "You are in the playing list.")
@@ -227,7 +222,7 @@ def join_event(request, token):
                     "event": event,
                     "existing_registration": existing_registration,
                     "visible_status": visible_status,
-                    "leave_confirm_stage": True,
+                    "leave_stage": "warn",
                 },
             )
 
@@ -252,6 +247,6 @@ def join_event(request, token):
             "event": event,
             "existing_registration": existing_registration,
             "visible_status": visible_status,
-            "leave_confirm_stage": False,
+            "leave_stage": None,
         },
     )
