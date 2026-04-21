@@ -134,7 +134,7 @@ def get_player_visible_status(registration, event):
     if registration.status == "playing":
         return {
             "label": "Playing",
-            "message": "You are in the playing list.",
+            "message": "You are confirmed in the game. See you on the pitch.",
             "queue_number": None,
         }
 
@@ -200,12 +200,12 @@ def join_event(request, token):
             elif visible_status["label"] == "Waiting":
                 messages.success(
                     request,
-                    f"You are in the waiting list. You are currently #{visible_status['queue_number']} in the waiting list.",
+                    f"You are in the waiting list. You are currently #{visible_status['queue_number']} in line. You may be moved into the game if a slot opens."
                 )
             else:
                 messages.success(
                     request,
-                    "Your status is pending. Pending means you may move into the waiting list when a slot opens, subject to queue.",
+                    "Your status is pending. Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.",
                 )
 
             return redirect("join_event", token=event.registration_token)
