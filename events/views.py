@@ -49,14 +49,6 @@ class EventCreateView(AdminRequiredMixin, CreateView):
         return initial
 
     def form_valid(self, form):
-        messages.error(
-            self.request,
-            f"DEBUG → event_date={form.cleaned_data.get('event_date')} | "
-            f"start_time={form.cleaned_data.get('start_time')} | "
-            f"end_time={form.cleaned_data.get('end_time')} | "
-            f"start_datetime={form.cleaned_data.get('start_datetime')} | "
-            f"end_datetime={form.cleaned_data.get('end_datetime')}"
-        )
 
         start_datetime = form.cleaned_data["start_datetime"]
         location = form.cleaned_data["location"]

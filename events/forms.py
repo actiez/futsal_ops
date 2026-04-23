@@ -71,11 +71,15 @@ class EventForm(forms.ModelForm):
 
         if event_date and start_time:
             start_dt = datetime.combine(event_date, start_time)
-            cleaned_data["start_datetime"] = start_dt
+            cleaned_data["start_datetime"] = timezone.make_aware(
+                start_dt, timezone.get_current_timezone()
+            )
 
         if event_date and end_time:
             end_dt = datetime.combine(event_date, end_time)
-            cleaned_data["end_datetime"] = end_dt
+            cleaned_data["end_datetime"] = timezone.make_aware(
+                end_dt, timezone.get_current_timezone()
+            )
 
         start_datetime = cleaned_data.get("start_datetime")
         end_datetime = cleaned_data.get("end_datetime")
@@ -87,13 +91,8 @@ class EventForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-
-        start_dt = self.cleaned_data["start_datetime"]
-        end_dt = self.cleaned_data["end_datetime"]
-
-        # Let Django interpret these naive datetimes in project TIME_ZONE
-        instance.start_datetime = start_dt
-        instance.end_datetime = end_dt
+        instance.start_datetime = self.cleaned_data["start_datetime"]
+        instance.end_datetime = self.cleaned_data["end_datetime"]
 
         if commit:
             instance.save()
