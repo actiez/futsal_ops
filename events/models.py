@@ -4,6 +4,7 @@ from django.utils import timezone
 
 import uuid
 
+
 class Event(models.Model):
     STATUS_DRAFT = "draft"
     STATUS_OPEN = "open"
@@ -36,7 +37,11 @@ class Event(models.Model):
     waiting_slots = models.PositiveIntegerField(default=5)
     backup_slots = models.PositiveIntegerField(default=3)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+    )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -60,16 +65,20 @@ class Event(models.Model):
 
     @property
     def weekday_display(self):
-        return self.start_datetime.strftime("%A")
+        local_start = timezone.localtime(self.start_datetime)
+        return local_start.strftime("%A")
 
     @property
     def date_display(self):
-        return self.start_datetime.strftime("%d %B %Y")
+        local_start = timezone.localtime(self.start_datetime)
+        return local_start.strftime("%d %B %Y")
 
     @property
     def time_range_display(self):
-        start = self.start_datetime.strftime("%I:%M %p").lstrip("0")
-        end = self.end_datetime.strftime("%I:%M %p").lstrip("0")
+        local_start = timezone.localtime(self.start_datetime)
+        local_end = timezone.localtime(self.end_datetime)
+        start = local_start.strftime("%I:%M %p").lstrip("0")
+        end = local_end.strftime("%I:%M %p").lstrip("0")
         return f"{start} to {end}"
 
     @property

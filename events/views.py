@@ -1,8 +1,6 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
-from django.contrib import messages
-from django.shortcuts import render
 
 from core.mixins import AdminRequiredMixin
 from .models import Event
@@ -10,12 +8,6 @@ from .forms import EventForm
 from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-SG_TZ = ZoneInfo("Asia/Singapore")
-
-today = timezone.localtime(timezone.now(), SG_TZ).date()
 
 class EventListView(ListView):
     model = Event
@@ -35,33 +27,37 @@ class EventCreateView(AdminRequiredMixin, CreateView):
     template_name = "events/create.html"
     success_url = reverse_lazy("event_list")
 
+    def get_initial(self):
+        initial = super().get_initial()
+        settings_obj = SystemSettings.get_solo()
 
-def get_initial(self):
-    initial = super().get_initial()
-    settings_obj = SystemSettings.get_solo()
+        initial.update({
+            "location": settings_obj.default_location,
+            "amount_payable": settings_obj.default_amount_payable,
+            "playing_slots": settings_obj.default_playing_slots,
+            "waiting_slots": settings_obj.default_waiting_slots,
+            "backup_slots": getattr(settings_obj, "default_backup_slots", 3),
+            "event_date": timezone.localdate(),
+        })
 
-    initial.update({
-        "location": settings_obj.default_location,
-        "amount_payable": settings_obj.default_amount_payable,
-        "playing_slots": settings_obj.default_playing_slots,
-        "waiting_slots": settings_obj.default_waiting_slots,
-    })
+        if settings_obj.default_start_time:
+            initial["start_time"] = settings_obj.default_start_time.strftime("%H:%M")
 
-    today = timezone.localtime(timezone.now(), SG_TZ).date()
+        if settings_obj.default_end_time:
+            initial["end_time"] = settings_obj.default_end_time.strftime("%H:%M")
 
-    if settings_obj.default_start_time:
-        initial["start_datetime"] = datetime.combine(
-            today, settings_obj.default_start_time
-        )
-
-    if settings_obj.default_end_time:
-        initial["end_datetime"] = datetime.combine(
-            today, settings_obj.default_end_time
-        )
-
-    return initial
+        return initial
 
     def form_valid(self, form):
+        messages.error(
+            self.request,
+            f"DEBUG → event_date={form.cleaned_data.get('event_date')} | "
+            f"start_time={form.cleaned_data.get('start_time')} | "
+            f"end_time={form.cleaned_data.get('end_time')} | "
+            f"start_datetime={form.cleaned_data.get('start_datetime')} | "
+            f"end_datetime={form.cleaned_data.get('end_datetime')}"
+        )
+
         start_datetime = form.cleaned_data["start_datetime"]
         location = form.cleaned_data["location"]
 
@@ -76,7 +72,8 @@ def get_initial(self):
 
         form.instance.created_by = self.request.user
         return super().form_valid(form)
-    
+
+
 class EventDetailView(AdminRequiredMixin, DetailView):
     model = Event
     template_name = "events/detail.html"
@@ -87,8 +84,8 @@ class EventDetailView(AdminRequiredMixin, DetailView):
         event = self.object
 
         join_url = self.request.build_absolute_uri(
-        reverse("join_event", kwargs={"token": event.registration_token})
-)
+            reverse("join_event", kwargs={"token": event.registration_token})
+        )
 
         registrations = event.registrations.select_related("user").order_by("sequence_number")
 
@@ -148,8 +145,6 @@ class EventDetailView(AdminRequiredMixin, DetailView):
 
         reminder_summary_lines.extend(playing_lines or ["-"])
 
-        context["whatsapp_summary"] = "\n".join(full_summary_lines)
-   
         invite_lines = [
             "⚽ Futsal Session",
             "",
@@ -162,8 +157,8 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             join_url,
         ]
 
+        context["whatsapp_summary"] = "\n".join(full_summary_lines)
         context["invite_text"] = "\n".join(invite_lines)
-
         context["whatsapp_reminder_summary"] = "\n".join(reminder_summary_lines)
         context["join_url"] = join_url
 
@@ -175,7 +170,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
         )
 
         context["registration_closed"] = timezone.now() >= event.start_datetime
-        
+
         return context
 
 
@@ -186,8 +181,8 @@ class EventUpdateView(AdminRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("event_detail", kwargs={"pk": self.object.pk})
-    
-    
+
+
 class EventDeleteView(AdminRequiredMixin, DeleteView):
     model = Event
     template_name = "events/delete.html"
