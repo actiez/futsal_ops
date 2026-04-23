@@ -1,79 +1,64 @@
 from django import forms
-from django.core.exceptions import ValidationError
-from datetime import datetime
+from django.utils import timezone
+from zoneinfo import ZoneInfo
 
 from .models import Event
 
+SG_TZ = ZoneInfo("Asia/Singapore")
+
 
 class EventForm(forms.ModelForm):
-    event_date = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date", "class": "w-full rounded-xl border p-3"})
-    )
-    start_time = forms.TimeField(
-        widget=forms.TimeInput(attrs={"type": "time", "class": "w-full rounded-xl border p-3"})
-    )
-    end_time = forms.TimeField(
-        widget=forms.TimeInput(attrs={"type": "time", "class": "w-full rounded-xl border p-3"})
-    )
-
     class Meta:
         model = Event
         fields = [
             "title",
-            "event_date",
-            "start_time",
-            "end_time",
+            "start_datetime",
+            "end_datetime",
             "location",
             "amount_payable",
             "playing_slots",
             "waiting_slots",
+            "backup_slots",
+            "status",
         ]
         widgets = {
-            "title": forms.TextInput(attrs={"class": "w-full rounded-xl border p-3"}),
-            "location": forms.TextInput(attrs={"class": "w-full rounded-xl border p-3"}),
-            "amount_payable": forms.NumberInput(attrs={"class": "w-full rounded-xl border p-3", "step": "0.01"}),
-            "playing_slots": forms.NumberInput(attrs={"class": "w-full rounded-xl border p-3"}),
-            "waiting_slots": forms.NumberInput(attrs={"class": "w-full rounded-xl border p-3"}),
-           
+            "start_datetime": forms.DateTimeInput(
+                attrs={"type": "datetime-local"},
+                format="%Y-%m-%dT%H:%M",
+            ),
+            "end_datetime": forms.DateTimeInput(
+                attrs={"type": "datetime-local"},
+                format="%Y-%m-%dT%H:%M",
+            ),
         }
 
     def __init__(self, *args, **kwargs):
-        initial = kwargs.get("initial", {})
-        event_instance = kwargs.get("instance")
-
-        if event_instance:
-            initial["event_date"] = event_instance.start_datetime.date()
-            initial["start_time"] = event_instance.start_datetime.time().replace(second=0, microsecond=0)
-            initial["end_time"] = event_instance.end_datetime.time().replace(second=0, microsecond=0)
-
-        kwargs["initial"] = initial
         super().__init__(*args, **kwargs)
+
+        # IMPORTANT: force correct input format
+        self.fields["start_datetime"].input_formats = ["%Y-%m-%dT%H:%M"]
+        self.fields["end_datetime"].input_formats = ["%Y-%m-%dT%H:%M"]
+
+        # Convert existing UTC → SG for display
+        if self.instance and self.instance.pk:
+            if self.instance.start_datetime:
+                self.initial["start_datetime"] = timezone.localtime(
+                    self.instance.start_datetime, SG_TZ
+                ).strftime("%Y-%m-%dT%H:%M")
+
+            if self.instance.end_datetime:
+                self.initial["end_datetime"] = timezone.localtime(
+                    self.instance.end_datetime, SG_TZ
+                ).strftime("%Y-%m-%dT%H:%M")
 
     def clean(self):
         cleaned_data = super().clean()
 
-        event_date = cleaned_data.get("event_date")
-        start_time = cleaned_data.get("start_time")
-        end_time = cleaned_data.get("end_time")
+        for field in ["start_datetime", "end_datetime"]:
+            dt = cleaned_data.get(field)
 
-        if event_date and start_time and end_time:
-            start_dt = datetime.combine(event_date, start_time)
-            end_dt = datetime.combine(event_date, end_time)
-
-            if end_dt <= start_dt:
-                raise ValidationError("End time must be after start time.")
-
-            cleaned_data["start_datetime"] = start_dt
-            cleaned_data["end_datetime"] = end_dt
+            if dt and timezone.is_naive(dt):
+                # FORCE interpret as Singapore time
+                cleaned_data[field] = timezone.make_aware(dt, SG_TZ)
 
         return cleaned_data
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.start_datetime = self.cleaned_data["start_datetime"]
-        instance.end_datetime = self.cleaned_data["end_datetime"]
-
-        if commit:
-            instance.save()
-
-        return instance

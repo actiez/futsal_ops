@@ -55,26 +55,26 @@
 
                 {% else %}
                     {% if visible_status.label == "Playing" %}
-    <p class="text-green-600 font-semibold">
-        {{ visible_status.message }}
-    </p>
+    			<p class="text-green-600 font-semibold">
+        			{{ visible_status.message }}
+    			</p>
 
-{% elif visible_status.label == "Waiting" %}
-    <p class="text-yellow-600 font-semibold">
-        You are in the waiting list.
-    </p>
-    <p class="text-sm text-gray-600">
-        You are currently #{{ visible_status.queue_number }} in line. You may be moved into the game if a slot opens.
-    </p>
+		   {% elif visible_status.label == "Waiting" %}
+   			 <p class="text-yellow-600 font-semibold">
+     			 	  You are in the waiting list.
+    			</p>
+   			 <p class="text-sm text-gray-600">
+       			 	You are currently #{{ visible_status.queue_number }} in line. You may be moved into the game if a slot opens.
+    			</p>
 
-{% elif visible_status.label == "Pending" %}
-    <p class="text-blue-600 font-semibold">
-        Your status is pending.
-    </p>
-    <p class="text-sm text-gray-600">
-        Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.
-    </p>
-{% endif %}
+		  {% elif visible_status.label == "Pending" %}
+    			<p class="text-blue-600 font-semibold">
+        			Your status is pending.
+   			 </p>
+   			 <p class="text-sm text-gray-600">
+       			 	Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.
+   			 </p>
+		  {% endif %}
 
                     <div class="mt-6">
                         <form method="post">
