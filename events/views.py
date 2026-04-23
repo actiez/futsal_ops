@@ -10,7 +10,7 @@ from .forms import EventForm
 from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 SG_TZ = ZoneInfo("Asia/Singapore")
@@ -35,26 +35,31 @@ class EventCreateView(AdminRequiredMixin, CreateView):
     template_name = "events/create.html"
     success_url = reverse_lazy("event_list")
 
-    def get_initial(self):
-        initial = super().get_initial()
-        settings_obj = SystemSettings.get_solo()
 
-        initial.update({
-            "location": settings_obj.default_location,
-            "amount_payable": settings_obj.default_amount_payable,
-            "playing_slots": settings_obj.default_playing_slots,
-            "waiting_slots": settings_obj.default_waiting_slots,
-        })
+def get_initial(self):
+    initial = super().get_initial()
+    settings_obj = SystemSettings.get_solo()
 
-        if settings_obj.default_start_time:
-            start_dt = datetime.combine(today, settings_obj.default_start_time)
-            initial["start_datetime"] = start_dt.strftime("%Y-%m-%dT%H:%M")
+    initial.update({
+        "location": settings_obj.default_location,
+        "amount_payable": settings_obj.default_amount_payable,
+        "playing_slots": settings_obj.default_playing_slots,
+        "waiting_slots": settings_obj.default_waiting_slots,
+    })
 
-        if settings_obj.default_end_time:
-            end_dt = datetime.combine(today, settings_obj.default_end_time)
-            initial["end_datetime"] = end_dt.strftime("%Y-%m-%dT%H:%M")
+    today = timezone.localtime(timezone.now(), SG_TZ).date()
 
-        return initial
+    if settings_obj.default_start_time:
+        initial["start_datetime"] = datetime.combine(
+            today, settings_obj.default_start_time
+        )
+
+    if settings_obj.default_end_time:
+        initial["end_datetime"] = datetime.combine(
+            today, settings_obj.default_end_time
+        )
+
+    return initial
 
     def form_valid(self, form):
         start_datetime = form.cleaned_data["start_datetime"]
