@@ -31,32 +31,23 @@
                 {% endif %}
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Date</label>
-                    {{ form.event_date }}
-                    {% if form.event_date.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.event_date.errors }}</div>
-                    {% endif %}
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-medium mb-2">Start Date & Time</label>
+        {{ form.start_datetime }}
+        {% if form.start_datetime.errors %}
+            <div class="text-red-600 text-sm mt-1">{{ form.start_datetime.errors }}</div>
+        {% endif %}
+    </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-2">Start Time</label>
-                    {{ form.start_time }}
-                    {% if form.start_time.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.start_time.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-2">End Time</label>
-                    {{ form.end_time }}
-                    {% if form.end_time.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.end_time.errors }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
+    <div>
+        <label class="block text-sm font-medium mb-2">End Date & Time</label>
+        {{ form.end_datetime }}
+        {% if form.end_datetime.errors %}
+            <div class="text-red-600 text-sm mt-1">{{ form.end_datetime.errors }}</div>
+        {% endif %}
+    </div>
+</div>
             <div>
                 <label class="block text-sm font-medium mb-2">Location</label>
                 {{ form.location }}
@@ -73,7 +64,7 @@
                 {% endif %}
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div>
         <label class="block text-sm font-medium mb-2">Playing Slots</label>
         {{ form.playing_slots }}
@@ -87,6 +78,14 @@
         {{ form.waiting_slots }}
         {% if form.waiting_slots.errors %}
             <div class="text-red-600 text-sm mt-1">{{ form.waiting_slots.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-2">Backup Slots</label>
+        {{ form.backup_slots }}
+        {% if form.backup_slots.errors %}
+            <div class="text-red-600 text-sm mt-1">{{ form.backup_slots.errors }}</div>
         {% endif %}
     </div>
 </div>
