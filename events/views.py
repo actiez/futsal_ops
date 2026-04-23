@@ -10,6 +10,12 @@ from .forms import EventForm
 from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+SG_TZ = ZoneInfo("Asia/Singapore")
+
+today = timezone.localtime(timezone.now(), SG_TZ).date()
 
 class EventListView(ListView):
     model = Event
@@ -41,9 +47,12 @@ class EventCreateView(AdminRequiredMixin, CreateView):
         })
 
         if settings_obj.default_start_time:
-            initial["start_time"] = settings_obj.default_start_time
+            start_dt = datetime.combine(today, settings_obj.default_start_time)
+            initial["start_datetime"] = start_dt.strftime("%Y-%m-%dT%H:%M")
+
         if settings_obj.default_end_time:
-            initial["end_time"] = settings_obj.default_end_time
+            end_dt = datetime.combine(today, settings_obj.default_end_time)
+            initial["end_datetime"] = end_dt.strftime("%Y-%m-%dT%H:%M")
 
         return initial
 
