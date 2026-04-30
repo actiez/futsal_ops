@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="mb-4">
+    <button onclick="history.back()" 
+        class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50 text-sm">
+        ← Back
+    </button>
+</div>
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Profile Summary -->
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h1 class="text-2xl font-bold">Profile</h1>
+
+        <div class="mt-4 space-y-2 text-sm">
+            <div class="font-semibold">{{ user.get_full_name|default:user.username }}</div>
+            <div>@{{ user.username }}</div>
+            <div>Mobile: {{ user.mobile_number }}</div>
+            <div>Email: {{ user.email }}</div>
+            <div>Games Played: {{ user.games_played_count }}</div>
+        </div>
+    </div>
+
+    <!-- Upcoming Games -->
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold">Upcoming Games</h2>
+
+        <div class="mt-4 space-y-4">
+            {% for reg in upcoming_registrations %}
+            <div class="border rounded-xl p-4">
+                <div class="font-semibold">
+                    {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ reg.event.time_range_display }}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ reg.event.location }}
+                </div>
+
+                <div class="mt-2 text-sm">
+                    Status: {{ reg.visible_status.label }}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-sm text-gray-500">No upcoming games.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Games -->
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold">Recent Games</h2>
+
+        <div class="mt-4 space-y-4">
+            {% for reg in recent_events %}
+            <div class="border rounded-xl p-4">
+                <div class="font-semibold">
+                    {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ reg.event.time_range_display }}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ reg.event.location }}
+                </div>
+
+                <div class="mt-2 text-sm">
+                    {{ reg.event.effective_status_label }}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-sm text-gray-500">No recent games.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

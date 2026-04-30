@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <button onclick="history.back()"
+        class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50 text-sm">
+        ← Back
+    </button>
+</div>
+
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h1 class="text-2xl font-bold">User Profile</h1>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div><span class="font-medium">Name:</span> {{ profile_user.get_full_name|default:profile_user.username }}</div>
+            <div><span class="font-medium">Username:</span> {{ profile_user.username }}</div>
+            <div><span class="font-medium">Mobile:</span> {{ profile_user.mobile_number }}</div>
+            <div><span class="font-medium">Email:</span> {{ profile_user.email }}</div>
+            <div><span class="font-medium">Role:</span> {{ profile_user.role }}</div>
+            <div><span class="font-medium">Player Type:</span> {{ profile_user.player_type }}</div>
+            <div><span class="font-medium">Games Played:</span> {{ profile_user.games_played_count }}</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold">Admin Notes</h2>
+
+        <form method="post" class="mt-4 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_admin_notes">
+
+            <textarea name="admin_notes" rows="6"
+                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">{{ profile_user.admin_notes }}</textarea>
+
+            <button type="submit" class="bg-black text-white px-5 py-3 rounded-xl">
+                Save Notes
+            </button>
+        </form>
+    </div>
+
+<div class="bg-white rounded-2xl shadow p-6">
+    <h2 class="text-xl font-bold mb-4">Insights</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+
+        <!-- Registration Outcome -->
+        <div class="bg-gray-50 p-4 rounded-xl">
+            <div class="font-semibold mb-2">Registration Outcome</div>	 
+            <div>Total: {{ insights.total_registered }}</div>
+            <div>Played: {{ insights.played }}</div>
+            <div>Not Played: {{ insights.not_played }}</div>
+	    <div class="mt-2 font-semibold">
+    		Completion Rate: {{ insights.completion_rate }}%
+	    </div>
+        </div>
+
+        <!-- Confirmed Reliability -->
+        <div class="bg-gray-50 p-4 rounded-xl">
+            <div class="font-semibold mb-2">Confirmed Reliability</div>
+            <div>Confirmed: {{ insights.confirmed_playing }}</div>
+            <div>Completed: {{ insights.completed }}</div>
+            <div>Dropped: {{ insights.dropped_after_confirmed }}</div>
+        </div>
+
+        <!-- Waiting Conversion -->
+        <div class="bg-gray-50 p-4 rounded-xl">
+            <div class="font-semibold mb-2">Waiting Conversion</div>
+            <div>Waiting: {{ insights.waiting_total }}</div>
+            <div>Converted: {{ insights.waiting_converted }}</div>
+        </div>
+	
+	<!-- Registration Speed -->
+	<div class="bg-gray-50 p-4 rounded-xl">
+    <div class="font-semibold mb-2">Registration Speed</div>
+
+    {% if insights.avg_registration_speed is not None %}
+        <div>Average: {{ insights.avg_registration_speed }} min</div>
+        <div>Fastest: {{ insights.fastest_registration_speed }} min</div>
+    {% else %}
+        <div class="text-gray-500">No data yet</div>
+    {% endif %}
+</div>
+
+
+    </div>
+</div>
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold">Current Activity</h2>
+
+        <div class="mt-4 space-y-4">
+            {% for reg in current_registrations %}
+            <div class="border rounded-xl p-4">
+                <div class="font-semibold">{{ reg.event.weekday_display }}, {{ reg.event.date_display }}</div>
+                <div class="text-sm text-gray-600">{{ reg.event.time_range_display }}</div>
+                <div class="text-sm text-gray-600">{{ reg.event.location }}</div>
+                <div class="mt-2 text-sm">
+                    Internal Status: <span class="font-medium">{{ reg.status|title }}</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                    Source: {{ reg.source|title }}
+                    {% if reg.registration_delay_minutes is not None %}
+                        · Registered {{ reg.registration_delay_minutes }} min after event creation
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-sm text-gray-500">No current activity.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-xl font-bold">Recent Event History</h2>
+
+        <div class="mt-4 space-y-4">
+            {% for reg in recent_registrations %}
+            <div class="border rounded-xl p-4">
+                <div class="font-semibold">{{ reg.event.weekday_display }}, {{ reg.event.date_display }}</div>
+                <div class="text-sm text-gray-600">{{ reg.event.time_range_display }}</div>
+                <div class="text-sm text-gray-600">{{ reg.event.location }}</div>
+                <div class="mt-2 text-sm">
+                    Status: <span class="font-medium">{{ reg.status|title }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-sm text-gray-500">No recent event history.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

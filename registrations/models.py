@@ -18,15 +18,44 @@ class EventRegistration(models.Model):
         (STATUS_REMOVED, "Removed"),
     ]
 
+    SOURCE_WEB = "web"
+    SOURCE_WHATSAPP = "whatsapp"
+    SOURCE_ADMIN = "admin"
+
+    SOURCE_CHOICES = [
+        (SOURCE_WEB, "Web"),
+        (SOURCE_WHATSAPP, "WhatsApp"),
+        (SOURCE_ADMIN, "Admin"),
+    ]
+    
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="registrations")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="event_registrations")
 
     sequence_number = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INTERESTED)
 
+    source = models.CharField(
+    max_length=20,
+    choices=SOURCE_CHOICES,
+    default=SOURCE_WEB,
+    )
+
     registered_at = models.DateTimeField(auto_now_add=True)
     notified_at = models.DateTimeField(null=True, blank=True)
     remarks = models.TextField(blank=True)
+
+    @property
+    def registration_delay_seconds(self):
+        if self.event and self.event.created_at and self.registered_at:
+            return int((self.registered_at - self.event.created_at).total_seconds())
+        return None
+
+    @property
+    def registration_delay_minutes(self):
+        seconds = self.registration_delay_seconds
+        if seconds is None:
+            return None
+        return round(seconds / 60)
 
     class Meta:
         unique_together = ("event", "user")

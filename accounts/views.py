@@ -1,15 +1,146 @@
 from django.views import View
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.urls import reverse
 from django.utils import timezone
 
 from events.models import Event
+from accounts.models import User
 from registrations.models import EventRegistration
 
 from .forms import UserRegisterForm
 
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+
+@login_required
+def admin_user_profile(request, user_id):
+    if not request.user.is_admin_level():
+        raise PermissionDenied("You do not have access to this page.")
+
+    profile_user = get_object_or_404(User, id=user_id)
+
+    # 🆕 HANDLE POST (save notes)
+    if request.method == "POST":
+        if request.POST.get("action") == "save_admin_notes":
+            profile_user.admin_notes = request.POST.get("admin_notes", "")
+            profile_user.save()
+            messages.success(request, "Admin notes updated successfully.")
+            return redirect("admin_user_profile", user_id=profile_user.id)
+
+    # existing logic
+    current_registrations = EventRegistration.objects.filter(
+        user=profile_user,
+        event__start_datetime__gte=timezone.now()
+    ).select_related("event").order_by("event__start_datetime")
+
+    recent_registrations = EventRegistration.objects.filter(
+        user=profile_user,
+        event__start_datetime__lt=timezone.now()
+    ).select_related("event").order_by("-event__start_datetime")[:5]
+
+    # 🧠 INSIGHTS CALCULATION
+
+    all_regs = EventRegistration.objects.filter(user=profile_user).select_related("event")
+
+    now = timezone.now()
+
+    past_regs = [r for r in all_regs if r.event.end_datetime and r.event.end_datetime < now]
+
+    # --- 1. Registration Outcome ---
+    total_registered = len(past_regs)
+    played = len([r for r in past_regs if r.status == "playing"])
+    not_played = total_registered - played
+
+    # --- 2. Confirmed Reliability ---
+    confirmed_playing = len([r for r in past_regs if r.status == "playing"])
+    completed = confirmed_playing  # same logic for now
+    dropped_after_confirmed = 0  # placeholder (we refine later)
+
+    # --- 3. Waiting Conversion ---
+    waiting_regs = [r for r in past_regs if r.status == "waiting"]
+    waiting_total = len(waiting_regs)
+    waiting_converted = 0  # placeholder (needs status logs later)
+
+    # --- Derived Metrics ---
+    completion_rate = 0
+    if total_registered > 0:
+        completion_rate = round((played / total_registered) * 100)
+
+    reliability_tag = "Neutral"
+
+    if total_registered >= 3:  # avoid small sample bias
+        if completion_rate >= 80:
+            reliability_tag = "Reliable Player ✅"
+        elif completion_rate >= 50:
+            reliability_tag = "Average Player ⚖️"
+        else:
+            reliability_tag = "Unreliable ❌"
+
+
+    registration_delays = [
+        reg.registration_delay_minutes
+        for reg in all_regs
+        if reg.registration_delay_minutes is not None
+    ]
+
+    avg_registration_speed = None
+    fastest_registration_speed = None
+
+    if registration_delays:
+        avg_registration_speed = round(sum(registration_delays) / len(registration_delays))
+        fastest_registration_speed = min(registration_delays)    
+
+
+    context = {
+        "profile_user": profile_user,
+        "current_registrations": current_registrations,
+        "recent_registrations": recent_registrations,
+        "insights": {
+            "total_registered": total_registered,
+            "played": played,
+            "not_played": not_played,
+            "confirmed_playing": confirmed_playing,
+            "completed": completed,
+            "dropped_after_confirmed": dropped_after_confirmed,
+            "waiting_total": waiting_total,
+            "waiting_converted": waiting_converted,
+            "completion_rate": completion_rate,
+            "reliability_tag": reliability_tag,
+            "avg_registration_speed": avg_registration_speed,
+            "fastest_registration_speed": fastest_registration_speed,
+        }
+    }
+
+    return render(request, "accounts/admin_profile.html", context)
+
+@login_required
+def profile_view(request):
+    user = request.user
+
+    # upcoming registrations
+    upcoming_registrations = EventRegistration.objects.filter(
+        user=user,
+        event__start_datetime__gte=timezone.now()
+    ).select_related("event").order_by("event__start_datetime")
+
+    for reg in upcoming_registrations:
+        reg.visible_status = get_player_visible_status(reg, reg.event)
+
+    # recent events
+    recent_events = EventRegistration.objects.filter(
+        user=user,
+        event__start_datetime__lt=timezone.now()
+    ).select_related("event").order_by("-event__start_datetime")[:5]
+
+    context = {
+        "user": user,
+        "upcoming_registrations": upcoming_registrations,
+        "recent_events": recent_events,
+    }
+
+    return render(request, "accounts/profile.html", context)
 
 def get_player_visible_status(registration, event):
     if not registration:
@@ -152,3 +283,6 @@ class CustomLoginView(LoginView):
         if user.is_superuser or user.is_staff:
             return "event_list"
         return "player_home"
+    
+
+

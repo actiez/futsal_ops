@@ -30,6 +30,7 @@ class User(AbstractUser):
     mobile_number = models.CharField(max_length=30, blank=True)
     games_played_count = models.PositiveIntegerField(default=0)
     email_verified = models.BooleanField(default=False)
+    admin_notes = models.TextField(blank=True, default="")
 
     def is_admin_level(self):
         return self.is_authenticated and (
