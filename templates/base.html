@@ -7,24 +7,31 @@
 <body class="bg-gray-50 min-h-screen">
     <header class="bg-white shadow-sm">
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-gray-900">Futsal Ops</a>
+            <a href="/" class="text-xl font-bold text-gray-900">Futsal Registration</a>
 
-            <div class="flex items-center gap-4">
-                {% if request.user.is_authenticated %}
-                    <span class="text-sm text-gray-600">{{ request.user.username }}</span>
+           <div class="flex items-center gap-4">
+    {% if request.user.is_authenticated %}
+        <span class="text-sm text-gray-600">{{ request.user.username }}</span>
 
-                    <form method="post" action="/logout/">
-                        {% csrf_token %}
-                        <button type="submit" class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">
-                            Logout
-                        </button>
-                    </form>
-                {% else %}
-                    <a href="/login/" class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                        Login
-                    </a>
-                {% endif %}
-            </div>
+        <a href="{% url 'profile' %}"
+           class="text-sm px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
+            Profile
+        </a>
+
+        <form method="post" action="/logout/">
+            {% csrf_token %}
+            <button type="submit"
+                class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">
+                Logout
+            </button>
+        </form>
+    {% else %}
+        <a href="/login/"
+           class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+            Login
+        </a>
+    {% endif %}
+</div>
         </div>
     </header>
 
