@@ -116,7 +116,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             event.location,
             f"${event.amount_payable} per pax",
             "",
-            "Register here:",
+            "Register/Leave Game here:",
             join_url,
             "",
             f"Playing ({playing_regs.count()}):",
