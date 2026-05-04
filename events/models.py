@@ -3,7 +3,12 @@ from django.db import models
 from django.utils import timezone
 
 import uuid
+import secrets
+import string
 
+def generate_event_code():
+    alphabet = string.ascii_uppercase + string.digits
+    return "EVT-" + "".join(secrets.choice(alphabet) for _ in range(6))
 
 class Event(models.Model):
     STATUS_DRAFT = "draft"
@@ -23,6 +28,13 @@ class Event(models.Model):
     registration_token = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
+        editable=False,
+    )
+
+    event_code = models.CharField(
+        max_length=20,
+        unique=True,
+        default=generate_event_code,
         editable=False,
     )
 

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "notifications",
     "dashboard",
     "system_settings",
+    "bot",
 ]
 
 MIDDLEWARE = [

@@ -8,6 +8,10 @@ from .forms import EventForm
 from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
+from django.views import View
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+
 
 class EventListView(ListView):
     model = Event
@@ -148,7 +152,9 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             "Join here:",
             join_url,
         ]
+        settings_obj = SystemSettings.get_solo()
 
+        context["weekly_limit_enabled"] = settings_obj.only_allow_once_per_week_registration
         context["whatsapp_summary"] = "\n".join(full_summary_lines)
         context["invite_text"] = "\n".join(invite_lines)
         context["whatsapp_reminder_summary"] = "\n".join(reminder_summary_lines)
@@ -179,3 +185,20 @@ class EventDeleteView(AdminRequiredMixin, DeleteView):
     model = Event
     template_name = "events/delete.html"
     success_url = reverse_lazy("event_list")
+
+class ToggleWeeklyRegistrationLimitView(AdminRequiredMixin, View):
+    def post(self, request, pk):
+        event = get_object_or_404(Event, pk=pk)
+        settings_obj = SystemSettings.get_solo()
+
+        settings_obj.only_allow_once_per_week_registration = (
+            not settings_obj.only_allow_once_per_week_registration
+        )
+        settings_obj.save()
+
+        if settings_obj.only_allow_once_per_week_registration:
+            messages.success(request, "Weekly registration limit turned ON.")
+        else:
+            messages.success(request, "Weekly registration limit turned OFF.")
+
+        return redirect("event_detail", pk=event.pk)

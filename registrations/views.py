@@ -11,6 +11,9 @@ from events.models import Event
 
 from django.http import HttpResponse
 
+from datetime import timedelta
+from system_settings.models import SystemSettings
+
 from .forms import EventRegistrationAdminForm
 from .models import EventRegistration
 from .services import (
@@ -163,6 +166,35 @@ def get_player_visible_status(registration, event):
         "queue_number": None,
     }
 
+def get_weekly_registration_conflict(user, event):
+    settings_obj = SystemSettings.get_solo()
+
+    if not settings_obj.only_allow_once_per_week_registration:
+        return None
+
+    local_start = timezone.localtime(event.start_datetime)
+    week_start = local_start.date() - timedelta(days=local_start.weekday())
+    week_end = week_start + timedelta(days=7)
+
+    week_start_dt = timezone.make_aware(
+        timezone.datetime.combine(week_start, timezone.datetime.min.time())
+    )
+    week_end_dt = timezone.make_aware(
+        timezone.datetime.combine(week_end, timezone.datetime.min.time())
+    )
+
+    return (
+        EventRegistration.objects
+        .filter(
+            user=user,
+            event__start_datetime__gte=week_start_dt,
+            event__start_datetime__lt=week_end_dt,
+        )
+        .exclude(event=event)
+        .exclude(status=EventRegistration.STATUS_REMOVED)
+        .select_related("event")
+        .first()
+    )
 
 @login_required
 def join_event(request, token):
@@ -185,6 +217,22 @@ def join_event(request, token):
         if action == "join":
             if existing_registration:
                 messages.info(request, "You are already registered for this event.")
+                return redirect("join_event", token=event.registration_token)
+            
+            weekly_conflict = get_weekly_registration_conflict(request.user, event)
+
+            if weekly_conflict:
+                conflict_event = weekly_conflict.event
+
+                messages.warning(
+                    request,
+                    (
+                        "You are already registered for another game this week: "
+                        f"{conflict_event.weekday_display}, {conflict_event.date_display}, "
+                        f"{conflict_event.time_range_display} at {conflict_event.location}. "
+                        "To keep slots fair, each player can only register for one game per week."
+                    ),
+                )
                 return redirect("join_event", token=event.registration_token)
 
             registration, created = register_user_for_event(

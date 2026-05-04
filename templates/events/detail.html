@@ -9,89 +9,132 @@
 <div class="max-w-6xl mx-auto">
 
     <!-- Top Bar -->
-<div class="flex justify-between items-center mb-6">
-    <a href="{% url 'event_list' %}" class="px-4 py-2 bg-gray-200 rounded-xl">
-        ← Back
-    </a>
-
-    <div class="flex gap-2">
-        {% if not registration_closed and event.effective_status != "completed" and event.effective_status != "cancelled" %}
-            <a href="{% url 'registration_add' event.id %}" class="px-4 py-2 bg-green-600 text-white rounded-xl">
-                + Add Player
-            </a>
-        {% endif %}
-
-        <a href="{% url 'event_edit' event.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-xl">
-            Edit Event
+    <div class="flex justify-between items-center mb-6">
+        <a href="{% url 'event_list' %}" class="px-4 py-2 bg-gray-200 rounded-xl">
+            ← Back
         </a>
 
-<a href="{% url 'event_delete' event.id %}"
-   class="px-4 py-2 bg-red-600 text-white rounded-xl">
-   Delete
-</a>
+        <div class="flex gap-2">
+            {% if not registration_closed and event.effective_status != "completed" and event.effective_status != "cancelled" %}
+                <a href="{% url 'registration_add' event.id %}" class="px-4 py-2 bg-green-600 text-white rounded-xl">
+                    + Add Player
+                </a>
+            {% endif %}
 
+            <a href="{% url 'event_edit' event.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-xl">
+                Edit Event
+            </a>
+
+            <a href="{% url 'event_delete' event.id %}" class="px-4 py-2 bg-red-600 text-white rounded-xl">
+                Delete
+            </a>
+        </div>
     </div>
 
-</div>
     <!-- Event Info -->
     <div class="bg-white p-6 rounded-2xl shadow mb-6">
-        <div class="flex justify-between items-center mb-2">
-            <h1 class="text-xl font-bold">
+    <div class="flex justify-between items-start gap-4">
+        
+        <!-- Left Info Block -->
+        <div class="flex-1">
+            <h1 class="text-xl font-bold mb-2">
                 {{ event.weekday_display }}, {{ event.date_display }}
             </h1>
 
-            <div class="text-sm px-3 py-1 rounded-full
-     {% if event.effective_status == 'completed' %}
-    bg-gray-800 text-white
-{% elif event.effective_status == 'full' %}
-    bg-red-100 text-red-700
-{% elif event.effective_status == 'playing_full' %}
-    bg-yellow-100 text-yellow-700
-{% else %}
-    bg-green-100 text-green-700
-{% endif %}
-            ">
-                {{ event.effective_status_label }}
+            <div class="text-gray-600">
+                {{ event.time_range_display }} · {{ event.location }}
+            </div>
+
+            <div class="text-gray-600 mt-2">
+                Event Code: <span class="font-mono font-semibold">{{ event.event_code }}</span>
+            </div>
+
+            <div class="text-gray-600 mt-2">
+                ${{ event.amount_payable }} per pax
             </div>
         </div>
 
-        <div class="text-gray-600">
-            {{ event.time_range_display }} · {{ event.location }}
-        </div>
+        <!-- Right Status Cluster -->
+        <div class="flex flex-col items-end gap-2 shrink-0">
 
-        <div class="text-gray-600 mt-1">
-            ${{ event.amount_payable }} per pax
+            <div class="text-sm px-3 py-1 rounded-full
+                {% if event.effective_status == 'completed' %}
+                    bg-gray-800 text-white
+                {% elif event.effective_status == 'full' %}
+                    bg-red-100 text-red-700
+                {% elif event.effective_status == 'playing_full' %}
+                    bg-yellow-100 text-yellow-700
+                {% else %}
+                    bg-green-100 text-green-700
+                {% endif %}
+            ">
+                {{ event.effective_status_label }}
+            </div>
+
+            <form method="post" action="{% url 'toggle_weekly_limit' event.id %}">
+                {% csrf_token %}
+
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium
+                    {% if weekly_limit_enabled %}
+                        bg-purple-50 border-purple-200 text-purple-700
+                    {% else %}
+                        bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100
+                    {% endif %}
+                    ">
+
+                    <span>Weekly limit:</span>
+
+                    <span class="font-semibold">
+                        {% if weekly_limit_enabled %}
+                            ON
+                        {% else %}
+                            OFF
+                        {% endif %}
+                    </span>
+
+                    <span class="w-4 h-4 rounded border flex items-center justify-center text-[10px]
+                        {% if weekly_limit_enabled %}
+                            bg-purple-600 border-purple-600 text-white
+                        {% else %}
+                            bg-white border-gray-300 text-transparent
+                        {% endif %}
+                    ">
+                        ✓
+                    </span>
+                </button>
+            </form>
         </div>
     </div>
+</div>
 
-<div class="bg-white p-4 rounded-2xl shadow mb-6">
-    <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
-        <div class="text-sm text-gray-500">Registration Link</div>
+    <!-- Registration Link -->
+    <div class="bg-white p-4 rounded-2xl shadow mb-6">
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div class="text-sm text-gray-500">Registration Link</div>
 
-        {% if not registration_closed %}
-            <button onclick="copyInvite()"
-                    class="px-3 py-2 bg-green-600 text-white rounded-xl text-sm hover:bg-green-700">
-                Copy Invite
-            </button>
+            {% if not registration_closed %}
+                <button onclick="copyInvite()"
+                        class="px-3 py-2 bg-green-600 text-white rounded-xl text-sm hover:bg-green-700">
+                    Copy Invite
+                </button>
+            {% endif %}
+        </div>
+
+        {% if registration_closed %}
+            <div class="text-sm text-red-600 font-medium">Registration closed</div>
+        {% else %}
+            <div class="text-sm break-all text-blue-700">{{ join_url }}</div>
+            <textarea id="inviteText" class="hidden">{{ invite_text }}</textarea>
         {% endif %}
     </div>
 
-    {% if registration_closed %}
-        <div class="text-sm text-red-600 font-medium">Registration closed</div>
-    {% else %}
-        <div class="text-sm break-all text-blue-700">{{ join_url }}</div>
-        <textarea id="inviteText" class="hidden">{{ invite_text }}</textarea>
-    {% endif %}
-</div>
-
     <!-- Players Grid -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-
         {% include "events/_player_column.html" with title="Interested" players=interested_regs %}
         {% include "events/_player_column.html" with title="Playing" players=playing_regs %}
         {% include "events/_player_column.html" with title="Waiting" players=waiting_regs %}
         {% include "events/_player_column.html" with title="Backup" players=backup_regs %}
-
     </div>
 
     <!-- WhatsApp Summary -->
@@ -118,38 +161,39 @@
             class="w-full border rounded-xl p-4 bg-gray-50 text-sm"
             readonly>{{ whatsapp_summary }}</textarea>
     </div>
-<div class="mt-8 bg-white rounded-2xl shadow p-5">
-    <h2 class="text-lg font-semibold mb-4">Recent Activity</h2>
 
-    {% if status_logs %}
-        <div class="space-y-3">
-            {% for log in status_logs %}
-                <div class="border rounded-xl p-3">
-                    <div class="font-medium">
-                        {{ log.registration.user.get_full_name|default:log.registration.user.username }}
-                    </div>
+    <!-- Recent Activity -->
+    <div class="mt-8 bg-white rounded-2xl shadow p-5">
+        <h2 class="text-lg font-semibold mb-4">Recent Activity</h2>
 
-                    <div class="text-sm text-gray-600 mt-1">
-                        {% if log.old_status %}
-                            {{ log.old_status }} → {{ log.new_status }}
-                        {% else %}
-                            added as {{ log.new_status }}
-                        {% endif %}
-                    </div>
+        {% if status_logs %}
+            <div class="space-y-3">
+                {% for log in status_logs %}
+                    <div class="border rounded-xl p-3">
+                        <div class="font-medium">
+                            {{ log.registration.user.get_full_name|default:log.registration.user.username }}
+                        </div>
 
-                    <div class="text-xs text-gray-400 mt-1">
-                        by {{ log.changed_by.username|default:"system" }} · {{ log.changed_at|date:"d M Y, g:i A" }}
+                        <div class="text-sm text-gray-600 mt-1">
+                            {% if log.old_status %}
+                                {{ log.old_status }} → {{ log.new_status }}
+                            {% else %}
+                                added as {{ log.new_status }}
+                            {% endif %}
+                        </div>
+
+                        <div class="text-xs text-gray-400 mt-1">
+                            by {{ log.changed_by.username|default:"system" }} · {{ log.changed_at|date:"d M Y, g:i A" }}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="text-sm text-gray-500">No activity yet.</p>
-    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-sm text-gray-500">No activity yet.</p>
+        {% endif %}
+    </div>
+
 </div>
-</div>
-
-
 
 <!-- Toast -->
 <div id="toast"
@@ -176,9 +220,7 @@ function copySummary() {
         setTimeout(() => toast.classList.add("hidden"), 1500);
     });
 }
-</script>
 
-<script>
 function copyInvite() {
     const text = document.getElementById("inviteText").value;
 
@@ -194,5 +236,6 @@ function copyInvite() {
     });
 }
 </script>
+
 </body>
 </html>

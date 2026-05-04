@@ -1,6 +1,7 @@
 from django.db import models
 
 
+
 class SystemSettings(models.Model):
     default_playing_slots = models.PositiveIntegerField(default=15)
     default_waiting_slots = models.PositiveIntegerField(default=5)
@@ -13,6 +14,8 @@ class SystemSettings(models.Model):
     default_end_time = models.TimeField(null=True, blank=True)
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    only_allow_once_per_week_registration = models.BooleanField(default=False)
 
     def __str__(self):
         return "System Settings"
