@@ -982,6 +982,8 @@ def meta_webhook(request):
         mode = request.GET.get("hub.mode")
         token = request.GET.get("hub.verify_token")
         challenge = request.GET.get("hub.challenge")
+        print("META_VERIFY_TOKEN from settings:", settings.META_VERIFY_TOKEN)
+        print("Token from Meta:", token)
 
         if mode == "subscribe" and token == settings.META_VERIFY_TOKEN:
             return JsonResponse(int(challenge), safe=False)
