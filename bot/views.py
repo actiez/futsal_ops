@@ -1027,6 +1027,11 @@ def meta_webhook(request):
             message_text=result.get("reply_text", ""),
         )
 
+        print("META incoming from:", from_number)
+        print("META message text:", message_text)
+        print("PEPZ result:", result)
+        print("META send_result:", send_result)
+        
         return JsonResponse(
             {
                 "ok": True,
