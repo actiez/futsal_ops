@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 
+
 def home(request):
     return redirect("/home/")
 
@@ -12,4 +13,5 @@ urlpatterns = [
     path("events/", include("events.urls")),
     path("registrations/", include("registrations.urls")),
     path("dashboard/", include("dashboard.urls")),
+    path("bot/", include("bot.urls")),
 ]

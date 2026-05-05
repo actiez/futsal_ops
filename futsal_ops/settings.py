@@ -152,4 +152,13 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+BOT_API_TOKEN = os.environ.get("BOT_API_TOKEN", "dev-bot-token")
+
 DEBUG = True
+
+# Meta Webhook Shell
+
+META_VERIFY_TOKEN = os.environ.get("META_VERIFY_TOKEN", "dev-meta-verify-token")
+META_WHATSAPP_TOKEN = os.environ.get("META_WHATSAPP_TOKEN", "")
+META_PHONE_NUMBER_ID = os.environ.get("META_PHONE_NUMBER_ID", "")
+META_GRAPH_API_VERSION = os.environ.get("META_GRAPH_API_VERSION", "v22.0")
