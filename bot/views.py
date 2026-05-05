@@ -4,7 +4,7 @@ import urllib.error
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
@@ -984,7 +984,7 @@ def meta_webhook(request):
         challenge = request.GET.get("hub.challenge")
 
         if mode == "subscribe" and token == settings.META_VERIFY_TOKEN:
-            return JsonResponse(int(challenge), safe=False)
+            return HttpResponse(challenge)
 
         return JsonResponse({"error": "Verification failed"}, status=403)
 
