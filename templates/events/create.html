@@ -99,6 +99,21 @@
                 </div>
             </div>
 
+		<div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <label class="flex items-start gap-3">
+                    {{ form.is_private }}
+                    <div>
+                        <div class="text-sm font-semibold">Private event</div>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Hide this event from the public event list. Players can still access it using the registration link.
+                        </p>
+                    </div>
+                </label>
+                {% if form.is_private.errors %}
+                    <div class="text-red-600 text-sm mt-2">{{ form.is_private.errors }}</div>
+                {% endif %}
+            </div>
+
             <div>
                 <label class="block text-sm font-medium mb-2">Status</label>
                 {{ form.status }}

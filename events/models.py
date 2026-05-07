@@ -49,6 +49,11 @@ class Event(models.Model):
     waiting_slots = models.PositiveIntegerField(default=5)
     backup_slots = models.PositiveIntegerField(default=3)
 
+    is_private = models.BooleanField(
+        default=False,
+        help_text="Private events are hidden from the public event list but accessible by registration link.",
+    )
+   
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

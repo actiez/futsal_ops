@@ -26,22 +26,31 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-        <label class="block text-sm font-medium mb-2">Start Date & Time</label>
-        {{ form.start_datetime }}
-        {% if form.start_datetime.errors %}
-            <div class="text-red-600 text-sm mt-1">{{ form.start_datetime.errors }}</div>
-        {% endif %}
-    </div>
+    		            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Date</label>
+                    {{ form.event_date }}
+                    {% if form.event_date.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.event_date.errors }}</div>
+                    {% endif %}
+                </div>
 
-    <div>
-        <label class="block text-sm font-medium mb-2">End Date & Time</label>
-        {{ form.end_datetime }}
-        {% if form.end_datetime.errors %}
-            <div class="text-red-600 text-sm mt-1">{{ form.end_datetime.errors }}</div>
-        {% endif %}
-    </div>
-</div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Start Time</label>
+                    {{ form.start_time }}
+                    {% if form.start_time.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.start_time.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">End Time</label>
+                    {{ form.end_time }}
+                    {% if form.end_time.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.end_time.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>	
 
             <div>
                 <label class="block text-sm font-medium mb-2">Location</label>
@@ -84,7 +93,21 @@
         {% endif %}
     </div>
 </div>
-
+	        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <label class="flex items-start gap-3">
+                    {{ form.is_private }}
+                    <div>
+                        <div class="text-sm font-semibold">Private event</div>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Hide this event from the public event list. Players can still access it using the registration link.
+                        </p>
+                    </div>
+                </label>
+                {% if form.is_private.errors %}
+                    <div class="text-red-600 text-sm mt-2">{{ form.is_private.errors }}</div>
+                {% endif %}
+            </div>
+	
             <div>
                 <label class="block text-sm font-medium mb-2">Status</label>
                 {{ form.status }}

@@ -10,7 +10,7 @@ SG_TZ = ZoneInfo("Asia/Singapore")
 
 INPUT_CLASS = "w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
 SELECT_CLASS = "w-full rounded-xl border border-gray-300 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-
+CHECKBOX_CLASS = "h-5 w-5 rounded border-gray-300 text-black focus:ring-black"
 
 class EventForm(forms.ModelForm):
     event_date = forms.DateField(
@@ -35,6 +35,7 @@ class EventForm(forms.ModelForm):
             "playing_slots",
             "waiting_slots",
             "backup_slots",
+            "is_private",
             "status",
         ]
         widgets = {
@@ -46,6 +47,7 @@ class EventForm(forms.ModelForm):
             "playing_slots": forms.NumberInput(attrs={"class": INPUT_CLASS}),
             "waiting_slots": forms.NumberInput(attrs={"class": INPUT_CLASS}),
             "backup_slots": forms.NumberInput(attrs={"class": INPUT_CLASS}),
+            "is_private": forms.CheckboxInput(attrs={"class": CHECKBOX_CLASS}),
             "status": forms.Select(attrs={"class": SELECT_CLASS}),
         }
 

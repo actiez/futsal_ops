@@ -19,11 +19,20 @@ class EventListView(ListView):
     context_object_name = "events"
     ordering = ["-start_datetime"]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        user = self.request.user
+
+        if user.is_authenticated and user.is_admin_level():
+            return queryset
+
+        return queryset.filter(is_private=False)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["now"] = timezone.now()
         return context
-
 
 class EventCreateView(AdminRequiredMixin, CreateView):
     model = Event

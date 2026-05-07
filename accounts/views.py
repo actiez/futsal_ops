@@ -236,7 +236,9 @@ class PlayerHomeView(View):
         now = timezone.now()
 
         upcoming_events = list(
-            Event.objects.filter(start_datetime__gt=now).order_by("start_datetime")
+            Event.objects
+            .filter(start_datetime__gt=now, is_private=False)
+            .order_by("start_datetime")
         )
 
         user_registrations = (
