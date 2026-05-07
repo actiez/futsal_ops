@@ -9,7 +9,7 @@ from events.models import Event
 from accounts.models import User
 from registrations.models import EventRegistration
 
-from .forms import UserRegisterForm
+from .forms import UserRegisterForm, UserProfileUpdateForm
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -141,6 +141,26 @@ def profile_view(request):
     }
 
     return render(request, "accounts/profile.html", context)
+
+@login_required
+def profile_edit_view(request):
+    if request.method == "POST":
+        form = UserProfileUpdateForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect("profile")
+    else:
+        form = UserProfileUpdateForm(instance=request.user)
+
+    return render(
+        request,
+        "accounts/profile_edit.html",
+        {
+            "form": form,
+        },
+    )
 
 def get_player_visible_status(registration, event):
     if not registration:

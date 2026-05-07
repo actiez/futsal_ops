@@ -13,36 +13,61 @@
 
     <!-- Welcome / Summary -->
     <div class="bg-white rounded-2xl shadow p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            <div class="flex-1">
                 <h1 class="text-2xl font-bold">
-                    Welcome, {{ user.get_full_name|default:user.username }}
+                    {{ user.get_full_name|default:user.username }}
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">@{{ user.username }}</p>
+
+                {% if not user.email or not user.mobile_number %}
+                    <div class="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                        Your profile is incomplete. Please update your email and mobile number so password reset and Pepz can work properly.
+                    </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <a href="{% url 'profile_edit' %}"
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm">
+                        Edit Profile
+                    </a>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 text-center">
-                <div class="bg-gray-50 rounded-xl px-4 py-3">
-                    <div class="text-xl font-bold">{{ user.games_played_count }}</div>
-                    <div class="text-xs text-gray-500">Games Played</div>
+            <div class="grid grid-cols-2 gap-3 w-full md:w-auto md:min-w-[220px] text-center">
+                <div class="bg-gray-50 rounded-xl px-5 py-4">
+                    <div class="text-2xl font-bold">{{ user.games_played_count }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Games Played</div>
                 </div>
 
-                <div class="bg-gray-50 rounded-xl px-4 py-3">
-                    <div class="text-xl font-bold">{{ upcoming_registrations|length }}</div>
-                    <div class="text-xs text-gray-500">Upcoming</div>
+                <div class="bg-gray-50 rounded-xl px-5 py-4">
+                    <div class="text-2xl font-bold">{{ upcoming_registrations|length }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Upcoming</div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
-            <div>Mobile: {{ user.mobile_number|default:"-" }}</div>
-            <div>Email: {{ user.email|default:"-" }}</div>
+        <div class="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Mobile</div>
+                <div class="font-medium">{{ user.mobile_number|default:"-" }}</div>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl px-4 py-3">
+                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Email</div>
+                <div class="font-medium break-all">{{ user.email|default:"-" }}</div>
+            </div>
         </div>
     </div>
 
     <!-- Upcoming Games -->
     <div class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-xl font-bold">Upcoming Games</h2>
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold">Upcoming Games</h2>
+                <p class="text-sm text-gray-500 mt-1">Your upcoming registrations and current status.</p>
+            </div>
+        </div>
 
         <div class="mt-4 space-y-4">
             {% for reg in upcoming_registrations %}
@@ -78,33 +103,47 @@
                 </div>
             </div>
             {% empty %}
-            <div class="text-sm text-gray-500">No upcoming games.</div>
+            <div class="text-sm text-gray-500 rounded-xl bg-gray-50 p-4">
+                No upcoming games.
+            </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Past Games -->
     <div class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-xl font-bold">Past Games</h2>
+        <div>
+            <h2 class="text-xl font-bold">Past Games</h2>
+            <p class="text-sm text-gray-500 mt-1">Recent games you were registered for.</p>
+        </div>
 
         <div class="mt-4 space-y-3">
             {% for reg in recent_events %}
-            <div class="border rounded-xl p-4">
-                <div class="font-semibold">
-                    {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
-                </div>
-                <div class="text-sm text-gray-600">
-                    {{ reg.event.time_range_display }}
-                </div>
-                <div class="text-sm text-gray-600">
-                    {{ reg.event.location }}
-                </div>
-                <div class="mt-2 text-sm text-gray-700">
-                    {{ reg.event.effective_status_label }}
+            <div class="border rounded-xl p-4 bg-gray-50">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div>
+                        <div class="font-semibold">
+                            {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            {{ reg.event.time_range_display }}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            {{ reg.event.location }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="inline-flex px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-medium">
+                            {{ reg.event.effective_status_label }}
+                        </span>
+                    </div>
                 </div>
             </div>
             {% empty %}
-            <div class="text-sm text-gray-500">No past games yet.</div>
+            <div class="text-sm text-gray-500 rounded-xl bg-gray-50 p-4">
+                No past games yet.
+            </div>
             {% endfor %}
         </div>
     </div>
