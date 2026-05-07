@@ -39,13 +39,28 @@ def get_default_status_for_user(event, user):
 
     return EventRegistration.STATUS_INTERESTED
 
-
 def register_user_for_event(event, user, changed_by=None):
     existing = EventRegistration.objects.filter(event=event, user=user).first()
-    if existing:
+
+    if existing and existing.status != EventRegistration.STATUS_REMOVED:
         return existing, False
 
     default_status = get_default_status_for_user(event, user)
+
+    if existing and existing.status == EventRegistration.STATUS_REMOVED:
+        old_status = existing.status
+        existing.status = default_status
+        existing.sequence_number = get_next_sequence_number(event)
+        existing.save()
+
+        EventStatusLog.objects.create(
+            registration=existing,
+            old_status=old_status,
+            new_status=default_status,
+            changed_by=changed_by,
+        )
+
+        return existing, True
 
     registration = EventRegistration.objects.create(
         event=event,
@@ -62,7 +77,6 @@ def register_user_for_event(event, user, changed_by=None):
     )
 
     return registration, True
-
 
 def auto_promote_waiting(event, changed_by=None):
     while has_playing_slot_available(event):
@@ -150,3 +164,21 @@ def update_registration_status(registration, new_status, changed_by=None):
     )
 
     return registration, "updated"
+
+def remove_registration(registration, changed_by=None):
+    old_status = registration.status
+
+    if old_status == EventRegistration.STATUS_REMOVED:
+        return registration, "no_change"
+
+    registration.status = EventRegistration.STATUS_REMOVED
+    registration.save()
+
+    EventStatusLog.objects.create(
+        registration=registration,
+        old_status=old_status,
+        new_status=EventRegistration.STATUS_REMOVED,
+        changed_by=changed_by,
+    )
+
+    return registration, "removed"

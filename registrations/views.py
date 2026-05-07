@@ -20,6 +20,7 @@ from .services import (
     register_user_for_event,
     update_registration_status,
     rebalance_event_slots,
+    remove_registration,
 )
 
 
@@ -121,7 +122,7 @@ class RegistrationDeleteView(AdminRequiredMixin, View):
         registration = get_object_or_404(EventRegistration, pk=pk)
         event = registration.event
 
-        registration.delete()
+        remove_registration(registration, changed_by=request.user)
 
         messages.success(request, "Player removed from event.")
 
@@ -279,7 +280,7 @@ def join_event(request, token):
                 messages.warning(request, "You are not registered for this event.")
                 return redirect("join_event", token=event.registration_token)
 
-            existing_registration.delete()
+            remove_registration(existing_registration, changed_by=request.user)
             rebalance_event_slots(event, changed_by=request.user)
 
             messages.success(
