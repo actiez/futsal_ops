@@ -11,7 +11,11 @@ from django.utils import timezone
 from accounts.models import User
 from events.models import Event
 from registrations.models import EventRegistration
-from registrations.services import register_user_for_event, rebalance_event_slots
+from registrations.services import (
+    register_user_for_event,
+    rebalance_event_slots,
+    remove_registration,
+)
 from system_settings.models import SystemSettings
 
 from .models import BotMessageLog, BotSession
@@ -407,7 +411,7 @@ def handle_confirm_reply(user, phone_number):
             clear_bot_session(phone_number)
             return "You are not registered for this game."
 
-        registration.delete()
+        remove_registration(registration, changed_by=user)
         rebalance_event_slots(event, changed_by=user)
 
         clear_bot_session(phone_number)

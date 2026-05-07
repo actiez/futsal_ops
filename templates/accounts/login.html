@@ -54,6 +54,11 @@
             No account?
             <a href="{% url 'register' %}?next={{ request.GET.next|urlencode }}" class="text-blue-600 hover:underline">Register</a>
         </div>
+	<div class="mt-4 text-sm">
+	    <a href="{% url 'password_reset' %}" class="text-blue-600 hover:underline">
+        	Forgot password?
+	    </a>
+</div>
     </div>
 </div>
 {% endblock %}

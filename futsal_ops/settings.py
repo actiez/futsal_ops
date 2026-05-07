@@ -162,3 +162,21 @@ META_VERIFY_TOKEN = os.environ.get("META_VERIFY_TOKEN", "dev-meta-verify-token")
 META_WHATSAPP_TOKEN = os.environ.get("META_WHATSAPP_TOKEN", "")
 META_PHONE_NUMBER_ID = os.environ.get("META_PHONE_NUMBER_ID", "")
 META_GRAPH_API_VERSION = os.environ.get("META_GRAPH_API_VERSION", "v22.0")
+
+# Email
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER or "Futsal Ops <noreply@localhost>",
+)
+
