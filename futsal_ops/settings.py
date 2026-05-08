@@ -176,3 +176,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     "Futsal Registration <onboarding@resend.dev>",
 )
+
+# Login caps sensitive
+
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.CaseInsensitiveUsernameBackend",
+]
