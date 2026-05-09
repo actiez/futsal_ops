@@ -4,6 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 from events.models import Event
 from accounts.models import User
@@ -11,8 +17,6 @@ from registrations.models import EventRegistration
 
 from .forms import UserRegisterForm, UserProfileUpdateForm
 
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 
 @login_required
 def admin_user_profile(request, user_id):
@@ -30,10 +34,16 @@ def admin_user_profile(request, user_id):
             return redirect("admin_user_profile", user_id=profile_user.id)
 
     # existing logic
-    current_registrations = EventRegistration.objects.filter(
-        user=profile_user,
-        event__start_datetime__gte=timezone.now()
-    ).select_related("event").order_by("event__start_datetime")
+    current_registrations = (
+        EventRegistration.objects
+        .filter(
+            user=profile_user,
+            event__start_datetime__gte=timezone.now()
+        )
+        .exclude(status=EventRegistration.STATUS_REMOVED)
+        .select_related("event")
+        .order_by("event__start_datetime")
+    )
 
     recent_registrations = EventRegistration.objects.filter(
         user=profile_user,
@@ -120,19 +130,31 @@ def profile_view(request):
     user = request.user
 
     # upcoming registrations
-    upcoming_registrations = EventRegistration.objects.filter(
-        user=user,
-        event__start_datetime__gte=timezone.now()
-    ).select_related("event").order_by("event__start_datetime")
+    upcoming_registrations = (
+        EventRegistration.objects
+        .filter(
+            user=user,
+            event__start_datetime__gte=timezone.now()
+        )
+        .exclude(status=EventRegistration.STATUS_REMOVED)
+        .select_related("event")
+        .order_by("event__start_datetime")
+    )
 
     for reg in upcoming_registrations:
         reg.visible_status = get_player_visible_status(reg, reg.event)
 
     # recent events
-    recent_events = EventRegistration.objects.filter(
-        user=user,
-        event__start_datetime__lt=timezone.now()
-    ).select_related("event").order_by("-event__start_datetime")[:5]
+    recent_events = (
+        EventRegistration.objects
+        .filter(
+            user=user,
+            event__start_datetime__lt=timezone.now()
+        )
+        .exclude(status=EventRegistration.STATUS_REMOVED)
+        .select_related("event")
+        .order_by("-event__start_datetime")[:5]
+    )
 
     context = {
         "user": user,
@@ -264,6 +286,7 @@ class PlayerHomeView(View):
         user_registrations = (
             EventRegistration.objects
             .filter(user=request.user, event__in=upcoming_events)
+            .exclude(status=EventRegistration.STATUS_REMOVED)
             .select_related("event")
         )
 
@@ -306,5 +329,58 @@ class CustomLoginView(LoginView):
             return "event_list"
         return "player_home"
     
+@login_required
+def user_list_view(request):
+    if not request.user.is_admin_level():
+        raise PermissionDenied("You do not have access to this page.")
 
+    search_query = request.GET.get("q", "").strip()
 
+    users = User.objects.all().order_by("first_name", "last_name", "username")
+
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query)
+            | Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(mobile_number__icontains=search_query)
+        )
+
+    return render(
+        request,
+        "accounts/user_list.html",
+        {
+            "users": users,
+            "search_query": search_query,
+        },
+    )
+
+@login_required
+def generate_password_reset_link(request, user_id):
+    if not request.user.is_superadmin_level():
+        raise PermissionDenied("Only superadmin can generate password reset links.")
+
+    target_user = get_object_or_404(User, id=user_id)
+
+    uid = urlsafe_base64_encode(force_bytes(target_user.pk))
+    token = default_token_generator.make_token(target_user)
+
+    reset_url = request.build_absolute_uri(
+        reverse(
+            "password_reset_confirm",
+            kwargs={
+                "uidb64": uid,
+                "token": token,
+            },
+        )
+    )
+
+    return render(
+        request,
+        "accounts/generated_password_reset_link.html",
+        {
+            "target_user": target_user,
+            "reset_url": reset_url,
+        },
+    )

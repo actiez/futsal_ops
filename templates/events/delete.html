@@ -1,14 +1,47 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="max-w-md mx-auto mt-12 text-center">
-    <h1 class="text-xl font-bold mb-4">Delete Event?</h1>
+{% block title %}Delete Event{% endblock %}
 
-    <form method="post">
-        {% csrf_token %}
-        <button class="px-4 py-2 bg-red-600 text-white rounded-xl">
-            Confirm Delete
-        </button>
-    </form>
+{% block content %}
+<div class="max-w-md mx-auto space-y-8">
+
+    <!-- Page Header -->
+    <div>
+        <p class="text-sm font-bold text-red-600 uppercase tracking-wide">
+            Danger Zone
+        </p>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+            Delete Event?
+        </h1>
+        <p class="mt-2 text-slate-500">
+            This action removes the event from Futsal Ops. Only continue if you are sure.
+        </p>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-red-100 shadow-sm p-6 md:p-8">
+        <div class="rounded-3xl border border-red-100 bg-red-50 p-5">
+            <div class="font-black text-red-700">
+                Confirm deletion
+            </div>
+            <p class="mt-2 text-sm text-red-700">
+                This cannot be undone from this page.
+            </p>
+        </div>
+
+        <form method="post" class="mt-6 flex flex-col sm:flex-row gap-3">
+            {% csrf_token %}
+
+            <button type="submit"
+                class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-red-600 text-white text-sm font-bold hover:bg-red-700">
+                Confirm Delete
+            </button>
+
+            <a href="{% url 'event_list' %}"
+               class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                Cancel
+            </a>
+        </form>
+    </div>
+
 </div>
 {% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Admin Console
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                Users
+            </h1>
+            <p class="mt-2 text-slate-500">
+                Manage player profiles, contact details, and account recovery.
+            </p>
+        </div>
+    </div>
+
+    <!-- Search Card -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+        <form method="get" class="flex flex-col md:flex-row gap-3">
+            <div class="flex-1">
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-2">
+                    Search players
+                </label>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Search name, username, email, or mobile"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+            </div>
+
+            <div class="flex gap-2 md:items-end">
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                    Search
+                </button>
+
+                {% if search_query %}
+                    <a href="{% url 'user_list' %}"
+                       class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                        Clear
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-black text-slate-950">Player Directory</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Contact completeness matters for password reset and Pepz.
+                </p>
+            </div>
+
+            <div class="hidden sm:inline-flex rounded-full bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600">
+                {{ users|length }} users
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                        <th class="text-left px-5 py-3 font-bold uppercase tracking-wide text-xs">Player</th>
+                        <th class="text-left px-5 py-3 font-bold uppercase tracking-wide text-xs">Contact</th>
+                        <th class="text-left px-5 py-3 font-bold uppercase tracking-wide text-xs">Profile</th>
+                        <th class="text-right px-5 py-3 font-bold uppercase tracking-wide text-xs">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-slate-100">
+                    {% for profile_user in users %}
+                        <tr class="hover:bg-slate-50/70">
+                            <!-- Player -->
+                            <td class="px-5 py-5 align-top">
+                                <div class="flex items-start gap-3">
+                                    <div class="h-11 w-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black">
+                                        {{ profile_user.first_name|first|default:profile_user.username|first|upper }}
+                                    </div>
+
+                                    <div>
+                                        <div class="font-black text-slate-950">
+                                            {{ profile_user.get_full_name|default:"Unnamed Player" }}
+                                        </div>
+                                        <div class="text-sm text-slate-500 mt-0.5">
+                                            @{{ profile_user.username }}
+                                        </div>
+
+                                        {% if profile_user.is_superuser or profile_user.role == "superadmin" %}
+                                            <span class="mt-2 inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                                                Superadmin
+                                            </span>
+                                        {% elif profile_user.role == "admin" %}
+                                            <span class="mt-2 inline-flex items-center rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white">
+                                                Admin
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Contact -->
+                            <td class="px-5 py-5 align-top">
+                                <div class="space-y-2">
+                                    <div>
+                                        <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">Email</div>
+                                        {% if profile_user.email %}
+                                            <div class="text-slate-700 break-all">{{ profile_user.email }}</div>
+                                        {% else %}
+                                            <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                                Missing email
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div>
+                                        <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">Mobile</div>
+                                        {% if profile_user.mobile_number %}
+                                            <div class="text-slate-700">{{ profile_user.mobile_number }}</div>
+                                        {% else %}
+                                            <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                                Missing mobile
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Profile -->
+                            <td class="px-5 py-5 align-top">
+                                <div class="flex flex-wrap gap-2">
+                                    {% if profile_user.player_type == "core" %}
+                                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                            Core
+                                        </span>
+                                    {% elif profile_user.player_type == "regular" %}
+                                        <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                            Regular
+                                        </span>
+                                    {% elif profile_user.player_type == "naughty" %}
+                                        <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                            Naughty
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                                            New
+                                        </span>
+                                    {% endif %}
+
+                                    {% if profile_user.email and profile_user.mobile_number %}
+                                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                            Complete
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                            Incomplete
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mt-3 text-xs text-slate-500">
+                                    Games played: <span class="font-bold text-slate-700">{{ profile_user.games_played_count }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-5 py-5 align-top text-right">
+                                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                                    <a href="{% url 'admin_user_profile' profile_user.id %}"
+                                       class="inline-flex items-center justify-center px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                                        View
+                                    </a>
+
+                                    {% if request.user.is_superadmin_level %}
+                                        <a href="{% url 'generate_password_reset_link' profile_user.id %}"
+                                           class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-amber-500 text-white text-sm font-bold hover:bg-amber-600">
+                                            Reset Link
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-5 py-12 text-center">
+                                <div class="mx-auto h-14 w-14 rounded-3xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl font-black">
+                                    👥
+                                </div>
+                                <h2 class="mt-4 text-xl font-black text-slate-950">
+                                    No users found
+                                </h2>
+                                <p class="mt-2 text-slate-500">
+                                    Try a different search term.
+                                </p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

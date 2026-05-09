@@ -8,9 +8,17 @@ from .models import Event
 
 SG_TZ = ZoneInfo("Asia/Singapore")
 
-INPUT_CLASS = "w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-SELECT_CLASS = "w-full rounded-xl border border-gray-300 px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-black"
-CHECKBOX_CLASS = "h-5 w-5 rounded border-gray-300 text-black focus:ring-black"
+INPUT_CLASS = (
+    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 "
+    "focus:outline-none focus:ring-2 focus:ring-emerald-500"
+)
+
+SELECT_CLASS = (
+    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 "
+    "focus:outline-none focus:ring-2 focus:ring-emerald-500"
+)
+
+CHECKBOX_CLASS = "h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
 
 class EventForm(forms.ModelForm):
     event_date = forms.DateField(

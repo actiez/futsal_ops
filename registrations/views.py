@@ -207,9 +207,10 @@ def join_event(request, token):
     existing_registration = (
         EventRegistration.objects
         .filter(event=event, user=request.user)
+        .exclude(status=EventRegistration.STATUS_REMOVED)
         .first()
     )
-
+    
     visible_status = get_player_visible_status(existing_registration, event)
 
     if request.method == "POST":

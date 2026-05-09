@@ -11,8 +11,9 @@ urlpatterns = [
     path("home/", PlayerHomeView.as_view(), name="player_home"),
     path("profile/", views.profile_view, name="profile"),
     path("profile/edit/", views.profile_edit_view, name="profile_edit"),
+    path("users/", views.user_list_view, name="user_list"),
     path("users/<int:user_id>/", views.admin_user_profile, name="admin_user_profile"),
-
+    path("users/<int:user_id>/generate-password-reset/", views.generate_password_reset_link, name="generate_password_reset_link"),
     path(
         "password-reset/",
         auth_views.PasswordResetView.as_view(

@@ -4,7 +4,10 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import User
 
 
-INPUT_CLASS = "w-full rounded-xl border border-gray-300 px-4 py-3"
+INPUT_CLASS = (
+    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 "
+    "focus:outline-none focus:ring-2 focus:ring-emerald-500"
+)
 
 
 def normalize_mobile_number(value):
@@ -31,15 +34,18 @@ class UserRegisterForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
     )
+
     last_name = forms.CharField(
         max_length=150,
         required=True,
         widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
     )
+
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={"class": INPUT_CLASS}),
     )
+
     mobile_number = forms.CharField(
         max_length=30,
         required=True,
@@ -66,9 +72,18 @@ class UserRegisterForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["username"].widget.attrs.update({"class": INPUT_CLASS})
-        self.fields["password1"].widget.attrs.update({"class": INPUT_CLASS})
-        self.fields["password2"].widget.attrs.update({"class": INPUT_CLASS})
+        self.fields["username"].widget.attrs.update({
+            "class": INPUT_CLASS,
+            "placeholder": "Choose a login ID",
+        })
+
+        self.fields["password1"].widget.attrs.update({
+            "class": INPUT_CLASS,
+        })
+
+        self.fields["password2"].widget.attrs.update({
+            "class": INPUT_CLASS,
+        })
 
     def clean_email(self):
         email = self.cleaned_data.get("email", "").strip().lower()
@@ -102,15 +117,18 @@ class UserProfileUpdateForm(forms.ModelForm):
         required=True,
         widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
     )
+
     last_name = forms.CharField(
         max_length=150,
         required=True,
         widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
     )
+
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={"class": INPUT_CLASS}),
     )
+
     mobile_number = forms.CharField(
         max_length=30,
         required=True,

@@ -1,153 +1,182 @@
 {% extends "base.html" %}
 
+{% block title %}My Profile{% endblock %}
+
 {% block content %}
+<div class="space-y-8">
 
-<div class="mb-4">
-    <button onclick="history.back()"
-        class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50 text-sm">
-        ← Back
-    </button>
-</div>
-
-<div class="max-w-4xl mx-auto space-y-6">
-
-    <!-- Welcome / Summary -->
-    <div class="bg-white rounded-2xl shadow p-6">
-        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold">
-                    {{ user.get_full_name|default:user.username }}
-                </h1>
-                <p class="text-sm text-gray-500 mt-1">@{{ user.username }}</p>
-
-                {% if not user.email or not user.mobile_number %}
-                    <div class="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                        Your profile is incomplete. Please update your email and mobile number so password reset and Pepz can work properly.
-                    </div>
-                {% endif %}
-
-                <div class="mt-4">
-                    <a href="{% url 'profile_edit' %}"
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm">
-                        Edit Profile
-                    </a>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 w-full md:w-auto md:min-w-[220px] text-center">
-                <div class="bg-gray-50 rounded-xl px-5 py-4">
-                    <div class="text-2xl font-bold">{{ user.games_played_count }}</div>
-                    <div class="text-xs text-gray-500 mt-1">Games Played</div>
-                </div>
-
-                <div class="bg-gray-50 rounded-xl px-5 py-4">
-                    <div class="text-2xl font-bold">{{ upcoming_registrations|length }}</div>
-                    <div class="text-xs text-gray-500 mt-1">Upcoming</div>
-                </div>
-            </div>
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Player Hub
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                My Profile
+            </h1>
+            <p class="mt-2 text-slate-500">
+                Manage your contact details and track your futsal registrations.
+            </p>
         </div>
 
-        <div class="mt-6 border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <div class="bg-gray-50 rounded-xl px-4 py-3">
-                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Mobile</div>
-                <div class="font-medium">{{ user.mobile_number|default:"-" }}</div>
+        <a href="{% url 'profile_edit' %}"
+           class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+            Edit Profile
+        </a>
+    </div>
+
+    <!-- Profile Summary -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+
+            <!-- Identity -->
+            <div class="flex items-start gap-4">
+                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm">
+                    {{ user.username|first|upper }}
+                </div>
+
+                <div class="flex-1">
+                    <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-950">
+                        {{ user.get_full_name|default:user.username }}
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500">@{{ user.username }}</p>
+
+                    {% if not user.email or not user.mobile_number %}
+                        <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
+                            Your profile is incomplete. Please update your email and mobile number so password reset and Pepz can work properly.
+                        </div>
+                    {% endif %}
+                </div>
             </div>
 
-            <div class="bg-gray-50 rounded-xl px-4 py-3">
-                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">Email</div>
-                <div class="font-medium break-all">{{ user.email|default:"-" }}</div>
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-3 lg:min-w-[260px]">
+                <div class="rounded-3xl bg-slate-950 text-white p-5 text-center">
+                    <div class="text-3xl font-black">{{ user.games_played_count }}</div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Games Played</div>
+                </div>
+
+                <div class="rounded-3xl bg-emerald-50 text-emerald-800 p-5 text-center">
+                    <div class="text-3xl font-black">{{ upcoming_registrations|length }}</div>
+                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Upcoming</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Contact -->
+        <div class="mt-6 border-t border-slate-100 pt-5 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                    Mobile
+                </div>
+                {% if user.mobile_number %}
+                    <div class="font-semibold text-slate-800">{{ user.mobile_number }}</div>
+                {% else %}
+                    <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                        Missing mobile
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="rounded-2xl bg-slate-50 p-4">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                    Email
+                </div>
+                {% if user.email %}
+                    <div class="font-semibold text-slate-800 break-all">{{ user.email }}</div>
+                {% else %}
+                    <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                        Missing email
+                    </span>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Upcoming Games -->
-    <div class="bg-white rounded-2xl shadow p-6">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h2 class="text-xl font-bold">Upcoming Games</h2>
-                <p class="text-sm text-gray-500 mt-1">Your upcoming registrations and current status.</p>
-            </div>
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div>
+            <h2 class="text-xl font-black text-slate-950">Upcoming Games</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Your upcoming registrations and current status.
+            </p>
         </div>
 
-        <div class="mt-4 space-y-4">
+        <div class="mt-5 space-y-4">
             {% for reg in upcoming_registrations %}
-            <div class="border rounded-xl p-4 bg-gray-50">
-                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                    <div>
-                        <div class="font-semibold">
-                            {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                <div class="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <div class="font-black text-slate-950">
+                                {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                            </div>
+                            <div class="text-sm text-slate-600 mt-1">
+                                {{ reg.event.time_range_display }} · {{ reg.event.location }}
+                            </div>
                         </div>
-                        <div class="text-sm text-gray-600 mt-1">
-                            {{ reg.event.time_range_display }}
-                        </div>
-                        <div class="text-sm text-gray-600">
-                            {{ reg.event.location }}
-                        </div>
-                    </div>
 
-                    <div>
-                        {% if reg.visible_status.label == "Playing" %}
-                            <span class="inline-flex px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                                Playing
-                            </span>
-                        {% elif reg.visible_status.label == "Waiting" %}
-                            <span class="inline-flex px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-medium">
-                                Waiting #{{ reg.visible_status.queue_number }}
-                            </span>
-                        {% else %}
-                            <span class="inline-flex px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
-                                Pending
-                            </span>
-                        {% endif %}
+                        <div>
+                            {% if reg.visible_status.label == "Playing" %}
+                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                    Playing
+                                </span>
+                            {% elif reg.visible_status.label == "Waiting" %}
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                    Waiting #{{ reg.visible_status.queue_number }}
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                    Pending
+                                </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
             {% empty %}
-            <div class="text-sm text-gray-500 rounded-xl bg-gray-50 p-4">
-                No upcoming games.
-            </div>
+                <div class="rounded-3xl bg-slate-50 p-6 text-sm text-slate-500">
+                    No upcoming games.
+                </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Past Games -->
-    <div class="bg-white rounded-2xl shadow p-6">
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
         <div>
-            <h2 class="text-xl font-bold">Past Games</h2>
-            <p class="text-sm text-gray-500 mt-1">Recent games you were registered for.</p>
+            <h2 class="text-xl font-black text-slate-950">Past Games</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Recent games you were registered for.
+            </p>
         </div>
 
-        <div class="mt-4 space-y-3">
+        <div class="mt-5 space-y-4">
             {% for reg in recent_events %}
-            <div class="border rounded-xl p-4 bg-gray-50">
-                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                    <div>
-                        <div class="font-semibold">
-                            {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                <div class="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <div class="font-black text-slate-950">
+                                {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                            </div>
+                            <div class="text-sm text-slate-600 mt-1">
+                                {{ reg.event.time_range_display }} · {{ reg.event.location }}
+                            </div>
                         </div>
-                        <div class="text-sm text-gray-600 mt-1">
-                            {{ reg.event.time_range_display }}
-                        </div>
-                        <div class="text-sm text-gray-600">
-                            {{ reg.event.location }}
-                        </div>
-                    </div>
 
-                    <div>
-                        <span class="inline-flex px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-medium">
-                            {{ reg.event.effective_status_label }}
-                        </span>
+                        <div>
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                                {{ reg.event.effective_status_label }}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
             {% empty %}
-            <div class="text-sm text-gray-500 rounded-xl bg-gray-50 p-4">
-                No past games yet.
-            </div>
+                <div class="rounded-3xl bg-slate-50 p-6 text-sm text-slate-500">
+                    No past games yet.
+                </div>
             {% endfor %}
         </div>
     </div>
 
 </div>
-
 {% endblock %}

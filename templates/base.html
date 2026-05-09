@@ -1,50 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}Keat Hong Futsal{% endblock %}</title>
+    <title>{% block title %}Futsal Ops{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <header class="bg-white shadow-sm">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-gray-900">Futsal Registration</a>
 
-           <div class="flex items-center gap-4">
-    {% if request.user.is_authenticated %}
-        <span class="text-sm text-gray-600">{{ request.user.username }}</span>
+<body class="min-h-screen bg-slate-50 text-slate-950">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-14 flex items-center justify-between gap-6">
 
-        <a href="{% url 'profile' %}"
-           class="text-sm px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
-            Profile
-        </a>
+                <!-- Brand -->
+                <a href="/" class="flex items-center gap-4">
+    			<div class="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl font-black shadow-sm">
+        		   F
+    			</div>
+   			 <div class="leading-tight">
+        			<div class="text-lg font-black tracking-tight text-slate-950">
+            			   Futsal Ops
+        			</div>
+        			<div class="text-[11px] uppercase tracking-[0.16em] text-emerald-700 font-bold mt-0.5">
+            		 	   Matchday Control
+        			</div>
+    			</div>
+		</a>
 
-        <form method="post" action="/logout/">
-            {% csrf_token %}
-            <button type="submit"
-                class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">
-                Logout
-            </button>
-        </form>
-    {% else %}
-        <a href="/login/"
-           class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-            Login
-        </a>
-    {% endif %}
-</div>
+                <!-- Nav -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    {% if request.user.is_authenticated %}
+
+                        {% if request.user.is_admin_level %}
+                            <a href="{% url 'event_list' %}"
+                               class="hidden sm:inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                                Events
+                            </a>
+
+                            <a href="{% url 'user_list' %}"
+                               class="hidden sm:inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                                Users
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'profile' %}"
+                           class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                            Profile
+                        </a>
+
+                        <div class="hidden md:inline-flex items-center px-3 py-2 rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                            {{ request.user.username }}
+                        </div>
+
+                        <form method="post" action="/logout/">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-red-600 text-white hover:bg-red-700">
+                                Logout
+                            </button>
+                        </form>
+
+                    {% else %}
+                        <a href="/login/"
+                           class="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700">
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-6 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% if messages %}
             <div class="mb-6 space-y-2">
                 {% for message in messages %}
-                    <div class="px-4 py-3 rounded-xl bg-gray-100 text-gray-700 text-sm">
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
                         {{ message }}
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 </body>

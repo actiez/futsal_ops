@@ -1,131 +1,358 @@
 {% extends "base.html" %}
 
+{% block title %}User Profile{% endblock %}
+
 {% block content %}
-<div class="mb-4">
-    <button onclick="history.back()"
-        class="inline-flex items-center px-4 py-2 rounded-xl border bg-white hover:bg-gray-50 text-sm">
-        ← Back
-    </button>
-</div>
+<div class="space-y-8">
 
-<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Player Management
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                User Profile
+            </h1>
+            <p class="mt-2 text-slate-500">
+                View player details, reliability signals, activity, and admin notes.
+            </p>
+        </div>
 
-    <div class="bg-white rounded-2xl shadow p-6">
-        <h1 class="text-2xl font-bold">User Profile</h1>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'user_list' %}"
+               class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                ← Users
+            </a>
 
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div><span class="font-medium">Name:</span> {{ profile_user.get_full_name|default:profile_user.username }}</div>
-            <div><span class="font-medium">Username:</span> {{ profile_user.username }}</div>
-            <div><span class="font-medium">Mobile:</span> {{ profile_user.mobile_number }}</div>
-            <div><span class="font-medium">Email:</span> {{ profile_user.email }}</div>
-            <div><span class="font-medium">Role:</span> {{ profile_user.role }}</div>
-            <div><span class="font-medium">Player Type:</span> {{ profile_user.player_type }}</div>
-            <div><span class="font-medium">Games Played:</span> {{ profile_user.games_played_count }}</div>
+            {% if request.user.is_superadmin_level %}
+                <a href="{% url 'generate_password_reset_link' profile_user.id %}"
+                   class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-amber-500 text-white text-sm font-bold hover:bg-amber-600">
+                    Generate Reset Link
+                </a>
+            {% endif %}
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-xl font-bold">Admin Notes</h2>
+    <!-- Profile Hero -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
-        <form method="post" class="mt-4 space-y-4">
+            <!-- Identity -->
+            <div class="flex items-start gap-4">
+                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm">
+                    {{ profile_user.username|first|upper }}
+                </div>
+
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-950">
+                            {{ profile_user.get_full_name|default:profile_user.username }}
+                        </h2>
+
+                        {% if profile_user.is_superuser or profile_user.role == "superadmin" %}
+                            <span class="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                                Superadmin
+                            </span>
+                        {% elif profile_user.role == "admin" %}
+                            <span class="inline-flex items-center rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white">
+                                Admin
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                                User
+                            </span>
+                        {% endif %}
+
+                        {% if profile_user.player_type == "core" %}
+                            <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                Core
+                            </span>
+                        {% elif profile_user.player_type == "regular" %}
+                            <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                Regular
+                            </span>
+                        {% elif profile_user.player_type == "naughty" %}
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                Naughty
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                                New
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <p class="mt-1 text-sm text-slate-500">@{{ profile_user.username }}</p>
+
+                    <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                                Mobile
+                            </div>
+                            {% if profile_user.mobile_number %}
+                                <div class="font-semibold text-slate-800">{{ profile_user.mobile_number }}</div>
+                            {% else %}
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                    Missing mobile
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                                Email
+                            </div>
+                            {% if profile_user.email %}
+                                <div class="font-semibold text-slate-800 break-all">{{ profile_user.email }}</div>
+                            {% else %}
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                    Missing email
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stat Tiles -->
+            <div class="grid grid-cols-2 gap-3 lg:min-w-[260px]">
+                <div class="rounded-3xl bg-slate-950 text-white p-5 text-center">
+                    <div class="text-3xl font-black">{{ profile_user.games_played_count }}</div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Games Played</div>
+                </div>
+
+                <div class="rounded-3xl bg-emerald-50 text-emerald-800 p-5 text-center">
+                    <div class="text-3xl font-black">{{ insights.completion_rate }}%</div>
+                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Completion</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
+            <div>
+                <h2 class="text-xl font-black text-slate-950">Player Insights</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Early reliability signals based on registration and event history.
+                </p>
+            </div>
+
+            <span class="inline-flex w-fit rounded-full bg-slate-50 px-4 py-2 text-sm font-bold text-slate-600">
+                {{ insights.reliability_tag }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+            <!-- Registration Outcome -->
+            <div class="rounded-3xl bg-slate-50 p-5">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+                    Registration Outcome
+                </div>
+                <div class="mt-3 text-3xl font-black text-slate-950">
+                    {{ insights.total_registered }}
+                </div>
+                <div class="mt-1 text-sm text-slate-500">Past registrations</div>
+
+                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                    <div class="rounded-2xl bg-white p-3">
+                        <div class="font-black text-emerald-700">{{ insights.played }}</div>
+                        <div class="text-xs text-slate-500">Played</div>
+                    </div>
+                    <div class="rounded-2xl bg-white p-3">
+                        <div class="font-black text-red-700">{{ insights.not_played }}</div>
+                        <div class="text-xs text-slate-500">Not Played</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmed Reliability -->
+            <div class="rounded-3xl bg-slate-50 p-5">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+                    Confirmed Reliability
+                </div>
+                <div class="mt-3 text-3xl font-black text-slate-950">
+                    {{ insights.confirmed_playing }}
+                </div>
+                <div class="mt-1 text-sm text-slate-500">Confirmed playing</div>
+
+                <div class="mt-4 space-y-2 text-sm text-slate-700">
+                    <div class="flex justify-between">
+                        <span>Completed</span>
+                        <span class="font-bold">{{ insights.completed }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Dropped</span>
+                        <span class="font-bold">{{ insights.dropped_after_confirmed }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waiting Conversion -->
+            <div class="rounded-3xl bg-slate-50 p-5">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+                    Waiting Conversion
+                </div>
+                <div class="mt-3 text-3xl font-black text-slate-950">
+                    {{ insights.waiting_total }}
+                </div>
+                <div class="mt-1 text-sm text-slate-500">Waiting records</div>
+
+                <div class="mt-4 rounded-2xl bg-white p-3 text-sm">
+                    <div class="flex justify-between text-slate-700">
+                        <span>Converted</span>
+                        <span class="font-bold">{{ insights.waiting_converted }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Speed -->
+            <div class="rounded-3xl bg-slate-50 p-5">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+                    Registration Speed
+                </div>
+
+                {% if insights.avg_registration_speed is not None %}
+                    <div class="mt-3 text-3xl font-black text-slate-950">
+                        {{ insights.avg_registration_speed }}
+                    </div>
+                    <div class="mt-1 text-sm text-slate-500">Average minutes</div>
+
+                    <div class="mt-4 rounded-2xl bg-white p-3 text-sm">
+                        <div class="flex justify-between text-slate-700">
+                            <span>Fastest</span>
+                            <span class="font-bold">{{ insights.fastest_registration_speed }} min</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="mt-4 text-sm text-slate-500">
+                        No data yet
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Admin Notes -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div>
+            <h2 class="text-xl font-black text-slate-950">Admin Notes</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Internal notes only. Players cannot see this.
+            </p>
+        </div>
+
+        <form method="post" class="mt-5 space-y-4">
             {% csrf_token %}
             <input type="hidden" name="action" value="save_admin_notes">
 
             <textarea name="admin_notes" rows="6"
-                class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">{{ profile_user.admin_notes }}</textarea>
+                class="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">{{ profile_user.admin_notes }}</textarea>
 
-            <button type="submit" class="bg-black text-white px-5 py-3 rounded-xl">
+            <button type="submit"
+                class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
                 Save Notes
             </button>
         </form>
     </div>
 
-<div class="bg-white rounded-2xl shadow p-6">
-    <h2 class="text-xl font-bold mb-4">Insights</h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-
-        <!-- Registration Outcome -->
-        <div class="bg-gray-50 p-4 rounded-xl">
-            <div class="font-semibold mb-2">Registration Outcome</div>	 
-            <div>Total: {{ insights.total_registered }}</div>
-            <div>Played: {{ insights.played }}</div>
-            <div>Not Played: {{ insights.not_played }}</div>
-	    <div class="mt-2 font-semibold">
-    		Completion Rate: {{ insights.completion_rate }}%
-	    </div>
-        </div>
-
-        <!-- Confirmed Reliability -->
-        <div class="bg-gray-50 p-4 rounded-xl">
-            <div class="font-semibold mb-2">Confirmed Reliability</div>
-            <div>Confirmed: {{ insights.confirmed_playing }}</div>
-            <div>Completed: {{ insights.completed }}</div>
-            <div>Dropped: {{ insights.dropped_after_confirmed }}</div>
-        </div>
-
-        <!-- Waiting Conversion -->
-        <div class="bg-gray-50 p-4 rounded-xl">
-            <div class="font-semibold mb-2">Waiting Conversion</div>
-            <div>Waiting: {{ insights.waiting_total }}</div>
-            <div>Converted: {{ insights.waiting_converted }}</div>
-        </div>
-	
-	<!-- Registration Speed -->
-	<div class="bg-gray-50 p-4 rounded-xl">
-    <div class="font-semibold mb-2">Registration Speed</div>
-
-    {% if insights.avg_registration_speed is not None %}
-        <div>Average: {{ insights.avg_registration_speed }} min</div>
-        <div>Fastest: {{ insights.fastest_registration_speed }} min</div>
-    {% else %}
-        <div class="text-gray-500">No data yet</div>
-    {% endif %}
-</div>
-
-
-    </div>
-</div>
-    <div class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-xl font-bold">Current Activity</h2>
-
-        <div class="mt-4 space-y-4">
-            {% for reg in current_registrations %}
-            <div class="border rounded-xl p-4">
-                <div class="font-semibold">{{ reg.event.weekday_display }}, {{ reg.event.date_display }}</div>
-                <div class="text-sm text-gray-600">{{ reg.event.time_range_display }}</div>
-                <div class="text-sm text-gray-600">{{ reg.event.location }}</div>
-                <div class="mt-2 text-sm">
-                    Internal Status: <span class="font-medium">{{ reg.status|title }}</span>
-                </div>
-                <div class="text-xs text-gray-500 mt-1">
-                    Source: {{ reg.source|title }}
-                    {% if reg.registration_delay_minutes is not None %}
-                        · Registered {{ reg.registration_delay_minutes }} min after event creation
-                    {% endif %}
-                </div>
+    <!-- Current Activity -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+                <h2 class="text-xl font-black text-slate-950">Current Activity</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Upcoming registrations for this player.
+                </p>
             </div>
+        </div>
+
+        <div class="mt-5 space-y-4">
+            {% for reg in current_registrations %}
+                <div class="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <div class="font-black text-slate-950">
+                                {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                            </div>
+                            <div class="text-sm text-slate-600 mt-1">
+                                {{ reg.event.time_range_display }} · {{ reg.event.location }}
+                            </div>
+                            <div class="text-xs text-slate-500 mt-2">
+                                Source: {{ reg.source|title }}
+                                {% if reg.registration_delay_minutes is not None %}
+                                    · Registered {{ reg.registration_delay_minutes }} min after event creation
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            {% if reg.status == "playing" %}
+                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                    Playing
+                                </span>
+                            {% elif reg.status == "waiting" %}
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                    Waiting
+                                </span>
+                            {% elif reg.status == "removed" %}
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                    Removed
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                    {{ reg.status|title }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             {% empty %}
-            <div class="text-sm text-gray-500">No current activity.</div>
+                <div class="rounded-3xl bg-slate-50 p-6 text-sm text-slate-500">
+                    No current activity.
+                </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-xl font-bold">Recent Event History</h2>
+    <!-- Recent Event History -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div>
+            <h2 class="text-xl font-black text-slate-950">Recent Event History</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Latest completed or past registrations.
+            </p>
+        </div>
 
-        <div class="mt-4 space-y-4">
+        <div class="mt-5 space-y-4">
             {% for reg in recent_registrations %}
-            <div class="border rounded-xl p-4">
-                <div class="font-semibold">{{ reg.event.weekday_display }}, {{ reg.event.date_display }}</div>
-                <div class="text-sm text-gray-600">{{ reg.event.time_range_display }}</div>
-                <div class="text-sm text-gray-600">{{ reg.event.location }}</div>
-                <div class="mt-2 text-sm">
-                    Status: <span class="font-medium">{{ reg.status|title }}</span>
+                <div class="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <div class="font-black text-slate-950">
+                                {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
+                            </div>
+                            <div class="text-sm text-slate-600 mt-1">
+                                {{ reg.event.time_range_display }} · {{ reg.event.location }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                                {{ reg.status|title }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
             {% empty %}
-            <div class="text-sm text-gray-500">No recent event history.</div>
+                <div class="rounded-3xl bg-slate-50 p-6 text-sm text-slate-500">
+                    No recent event history.
+                </div>
             {% endfor %}
         </div>
     </div>

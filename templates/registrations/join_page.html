@@ -1,87 +1,179 @@
 {% extends "base.html" %}
 
-{% block title %}Event{% endblock %}
+{% block title %}Join Game{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="bg-white p-6 rounded-2xl shadow">
+<div class="max-w-4xl mx-auto space-y-8">
 
-        <h1 class="text-2xl font-bold mb-4">
-            {% if event.title %}
-                {{ event.title }}
-            {% else %}
-                Futsal Session
-            {% endif %}
-        </h1>
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Matchday
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                {% if event.title %}
+                    {{ event.title }}
+                {% else %}
+                    Futsal Session
+                {% endif %}
+            </h1>
+            <p class="mt-2 text-slate-500">
+                Review the session details and manage your registration.
+            </p>
+        </div>
+    </div>
 
-        <div class="space-y-2 text-gray-700">
-            <p><strong>Date:</strong> {{ event.weekday_display }}, {{ event.date_display }}</p>
-            <p><strong>Time:</strong> {{ event.time_range_display }}</p>
-            <p><strong>Location:</strong> {{ event.location }}</p>
-            <p><strong>Amount Payable:</strong> ${{ event.amount_payable }}</p>
+    <!-- Event Card -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+
+        <!-- Event Summary -->
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-start gap-5">
+
+                <div class="min-w-[78px] rounded-3xl bg-slate-950 text-white px-4 py-3 text-center">
+                    <div class="text-xs font-bold uppercase tracking-wide text-emerald-300">
+                        {{ event.weekday_display|slice:":3" }}
+                    </div>
+                    <div class="text-3xl font-black leading-tight">
+                        {{ event.start_datetime|date:"d" }}
+                    </div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300">
+                        {{ event.start_datetime|date:"M" }}
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <h2 class="text-2xl font-black tracking-tight text-slate-950">
+                        {{ event.weekday_display }}, {{ event.date_display }}
+                    </h2>
+
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                                Time
+                            </div>
+                            <div class="font-semibold text-slate-800">
+                                {{ event.time_range_display }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                                Location
+                            </div>
+                            <div class="font-semibold text-slate-800">
+                                {{ event.location }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
+                                Amount
+                            </div>
+                            <div class="font-semibold text-slate-800">
+                                ${{ event.amount_payable }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Notice -->
+            <div class="mt-6 rounded-3xl border border-emerald-100 bg-emerald-50 p-5">
+                <div class="flex items-start gap-3">
+                    <div class="h-9 w-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                        i
+                    </div>
+                    <div>
+                        <div class="font-black text-emerald-900">
+                            Important Notice
+                        </div>
+                        <ul class="mt-2 space-y-1 text-sm text-emerald-800 list-disc list-inside">
+                            <li>Slots are allocated automatically.</li>
+                            <li>If you leave and join again later, you may need to queue again.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="mt-6 p-4 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700">
-            <p class="font-medium mb-2">Important Notice</p>
-            <ul class="space-y-1 list-disc list-inside">
-                <li>Slots are allocated automatically.</li>
-                <li>If you leave and join again later, you will need to queue again.</li>
-            </ul>
-        </div>
-
-        <div class="mt-8">
+        <!-- Registration State -->
+        <div class="border-t border-slate-100 bg-slate-50 p-6">
             {% if existing_registration %}
 
                 {% if leave_stage == "warn" %}
-                    <div class="p-4 rounded-xl bg-red-50 border border-red-200">
-                        <p class="font-semibold text-red-700 mb-2">Leave Game?</p>
-                        <p class="text-sm text-red-700 mb-4">
-                            If you leave and join again later, you will need to queue again.
-                        </p>
+                    <div class="rounded-3xl border border-red-100 bg-red-50 p-5">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <h3 class="text-xl font-black text-red-700">
+                                    Leave Game?
+                                </h3>
+                                <p class="mt-2 text-sm text-red-700">
+                                    If you leave and join again later, you may need to queue again.
+                                </p>
+                            </div>
 
-                        <form method="post" class="flex gap-3">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="leave_confirm">
-                            <button type="submit"
-                                class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700">
-                                Confirm Leave
-                            </button>
-                            <a href="{% url 'join_event' event.registration_token %}"
-                               class="px-4 py-2 bg-gray-100 rounded-xl hover:bg-gray-200">
-                                Cancel
-                            </a>
-                        </form>
+                            <form method="post" class="flex flex-col sm:flex-row gap-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="leave_confirm">
+
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-red-600 text-white text-sm font-bold hover:bg-red-700">
+                                    Confirm Leave
+                                </button>
+
+                                <a href="{% url 'join_event' event.registration_token %}"
+                                   class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                                    Cancel
+                                </a>
+                            </form>
+                        </div>
                     </div>
 
                 {% else %}
-                    {% if visible_status.label == "Playing" %}
-    			<p class="text-green-600 font-semibold">
-        			{{ visible_status.message }}
-    			</p>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            {% if visible_status.label == "Playing" %}
+                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                    Playing
+                                </span>
+                                <h3 class="mt-3 text-xl font-black text-slate-950">
+                                    You are confirmed in the game.
+                                </h3>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    See you on the pitch.
+                                </p>
 
-		   {% elif visible_status.label == "Waiting" %}
-   			 <p class="text-yellow-600 font-semibold">
-     			 	  You are in the waiting list.
-    			</p>
-   			 <p class="text-sm text-gray-600">
-       			 	You are currently #{{ visible_status.queue_number }} in line. You may be moved into the game if a slot opens.
-    			</p>
+                            {% elif visible_status.label == "Waiting" %}
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                                    Waiting #{{ visible_status.queue_number }}
+                                </span>
+                                <h3 class="mt-3 text-xl font-black text-slate-950">
+                                    You are in the waiting list.
+                                </h3>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    You may be moved into the game if a slot opens.
+                                </p>
 
-		  {% elif visible_status.label == "Pending" %}
-    			<p class="text-blue-600 font-semibold">
-        			Your status is pending.
-   			 </p>
-   			 <p class="text-sm text-gray-600">
-       			 	Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.
-   			 </p>
-		  {% endif %}
+                            {% elif visible_status.label == "Pending" %}
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                    Pending
+                                </span>
+                                <h3 class="mt-3 text-xl font-black text-slate-950">
+                                    Your status is pending.
+                                </h3>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.
+                                </p>
+                            {% endif %}
+                        </div>
 
-                    <div class="mt-6">
                         <form method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="leave_warn">
                             <button type="submit"
-                                class="px-4 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200">
+                                class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-red-50 text-red-700 text-sm font-bold hover:bg-red-100">
                                 Leave Game
                             </button>
                         </form>
@@ -89,30 +181,35 @@
                 {% endif %}
 
             {% else %}
-                <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
-                    <p class="font-semibold text-blue-700 mb-2">Join This Game</p>
-                    <p class="text-sm text-gray-700">
-                        Create your account once for faster joining next time.
-                    </p>
-                </div>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                            Open
+                        </span>
+                        <h3 class="mt-3 text-xl font-black text-slate-950">
+                            Join this game
+                        </h3>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Join once and you can manage your status from your profile or Pepz.
+                        </p>
+                    </div>
 
-                <div class="mt-6">
                     <form method="post">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="join">
                         <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                            class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
                             Join Game
                         </button>
                     </form>
                 </div>
             {% endif %}
         </div>
-
-        <div class="mt-8 text-sm text-gray-500">
-            If the page loads slowly at first, please wait a moment. The system may be waking up.
-        </div>
-
     </div>
+
+    <div class="text-center text-sm text-slate-500">
+        If the page loads slowly at first, please wait a moment. The system may be waking up.
+    </div>
+
 </div>
 {% endblock %}
