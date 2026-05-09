@@ -1,17 +1,19 @@
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
+from django.views import View
+from django.shortcuts import redirect, get_object_or_404, render
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.db.models import Count
 
 from core.mixins import AdminRequiredMixin
-from .models import Event
-from .forms import EventForm
 from system_settings.models import SystemSettings
 from registrations.models import EventRegistration, EventStatusLog
 
-from django.views import View
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib import messages
-
+from .forms import EventForm
+from .models import Event, EventCloseout, EventAttendance
+from .services import create_closeout_snapshot, event_is_closeout_eligible
 
 class EventListView(ListView):
     model = Event
@@ -178,6 +180,15 @@ class EventDetailView(AdminRequiredMixin, DetailView):
 
         context["registration_closed"] = timezone.now() >= event.start_datetime
 
+        closeout = EventCloseout.objects.filter(event=event).first()
+        closeout_available = (
+            event.end_datetime <= timezone.now()
+            and event.status != Event.STATUS_CANCELLED
+        )
+
+        context["closeout"] = closeout
+        context["closeout_available"] = closeout_available
+
         return context
 
 
@@ -194,6 +205,167 @@ class EventDeleteView(AdminRequiredMixin, DeleteView):
     model = Event
     template_name = "events/delete.html"
     success_url = reverse_lazy("event_list")
+
+class EventCloseoutView(AdminRequiredMixin, View):
+    template_name = "events/closeout.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.event = get_object_or_404(Event, pk=kwargs["pk"])
+
+        if self.event.status == Event.STATUS_CANCELLED:
+            messages.error(request, "Cancelled events do not require closeout.")
+            return redirect("event_detail", pk=self.event.pk)
+
+        if not event_is_closeout_eligible(self.event):
+            messages.error(request, "Closeout is only available after the event has ended.")
+            return redirect("event_detail", pk=self.event.pk)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_closeout(self):
+        return create_closeout_snapshot(self.event, created_by=self.request.user)
+
+    def get_context_data(self, closeout):
+        active_attendances = (
+            closeout.attendances
+            .filter(is_active=True)
+            .select_related("user", "registration")
+            .order_by("user__first_name", "user__last_name", "user__username")
+        )
+
+        active_user_ids = active_attendances.values_list("user_id", flat=True)
+
+        User = get_user_model()
+        available_users = (
+            User.objects
+            .exclude(id__in=active_user_ids)
+            .order_by("first_name", "last_name", "username")
+        )
+
+        summary = {
+            "attended": active_attendances.filter(status=EventAttendance.STATUS_ATTENDED).count(),
+            "absent": active_attendances.filter(status=EventAttendance.STATUS_ABSENT).count(),
+            "excused": active_attendances.filter(status=EventAttendance.STATUS_EXCUSED).count(),
+            "total": active_attendances.count(),
+        }
+
+        return {
+            "event": self.event,
+            "closeout": closeout,
+            "active_attendances": active_attendances,
+            "available_users": available_users,
+            "summary": summary,
+            "attendance_status_choices": EventAttendance.STATUS_CHOICES,
+        }
+
+    def get(self, request, pk):
+        closeout = self.get_closeout()
+
+        return render(
+            request,
+            self.template_name,
+            self.get_context_data(closeout),
+        )
+
+    def post(self, request, pk):
+        closeout = self.get_closeout()
+
+        if closeout.is_closed:
+            messages.info(request, "This closeout is already closed and can only be viewed.")
+            return redirect("event_closeout", pk=self.event.pk)
+
+        action = request.POST.get("action")
+
+        if action in {"save", "close"}:
+            attendances = closeout.attendances.filter(is_active=True)
+
+            for attendance in attendances:
+                status_key = f"status_{attendance.id}"
+                notes_key = f"notes_{attendance.id}"
+
+                new_status = request.POST.get(status_key)
+                new_notes = request.POST.get(notes_key, "")
+
+                if new_status in {
+                    EventAttendance.STATUS_ATTENDED,
+                    EventAttendance.STATUS_ABSENT,
+                    EventAttendance.STATUS_EXCUSED,
+                }:
+                    attendance.status = new_status
+
+                attendance.notes = new_notes
+                attendance.updated_by = request.user
+                attendance.save()
+
+            if action == "close":
+                closeout.status = EventCloseout.STATUS_CLOSED_MANUAL
+                closeout.closed_by = request.user
+                closeout.closed_at = timezone.now()
+                closeout.save()
+
+                messages.success(request, "Event closeout has been closed. It is now read-only.")
+            else:
+                messages.success(request, "Attendance saved.")
+
+            return redirect("event_closeout", pk=self.event.pk)
+
+        if action == "add_player":
+            user_id = request.POST.get("user_id")
+            User = get_user_model()
+            user = get_object_or_404(User, id=user_id)
+
+            registration = (
+                EventRegistration.objects
+                .filter(event=self.event, user=user)
+                .first()
+            )
+
+            attendance, created = EventAttendance.objects.get_or_create(
+                closeout=closeout,
+                user=user,
+                defaults={
+                    "event": self.event,
+                    "registration": registration,
+                    "status": EventAttendance.STATUS_ATTENDED,
+                    "source": EventAttendance.SOURCE_MANUAL_ADD,
+                    "is_active": True,
+                    "created_by": request.user,
+                    "updated_by": request.user,
+                },
+            )
+
+            if not created and not attendance.is_active:
+                attendance.is_active = True
+                attendance.status = EventAttendance.STATUS_ATTENDED
+                attendance.source = EventAttendance.SOURCE_MANUAL_ADD
+                attendance.updated_by = request.user
+                attendance.save()
+                messages.success(request, "Player added back to closeout.")
+            elif created:
+                messages.success(request, "Player added to closeout.")
+            else:
+                messages.info(request, "Player is already in this closeout.")
+
+            return redirect("event_closeout", pk=self.event.pk)
+
+        if action == "remove_player":
+            attendance_id = request.POST.get("attendance_id")
+            attendance = get_object_or_404(
+                EventAttendance,
+                id=attendance_id,
+                closeout=closeout,
+                is_active=True,
+            )
+
+            attendance.is_active = False
+            attendance.updated_by = request.user
+            attendance.save()
+
+            messages.success(request, "Player removed from closeout.")
+            return redirect("event_closeout", pk=self.event.pk)
+
+        messages.error(request, "Invalid closeout action.")
+        return redirect("event_closeout", pk=self.event.pk)
 
 class ToggleWeeklyRegistrationLimitView(AdminRequiredMixin, View):
     def post(self, request, pk):

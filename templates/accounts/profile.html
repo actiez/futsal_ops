@@ -30,15 +30,16 @@
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
             <!-- Identity -->
-            <div class="flex items-start gap-4">
-                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm">
+            <div class="flex items-start gap-4 flex-1 min-w-0">
+                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm shrink-0">
                     {{ user.username|first|upper }}
                 </div>
 
-                <div class="flex-1">
+                <div class="min-w-0">
                     <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-950">
                         {{ user.get_full_name|default:user.username }}
                     </h2>
+
                     <p class="mt-1 text-sm text-slate-500">@{{ user.username }}</p>
 
                     {% if not user.email or not user.mobile_number %}
@@ -49,29 +50,36 @@
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-2 gap-3 lg:min-w-[260px]">
+            <!-- Main Stats -->
+            <div class="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[260px]">
                 <div class="rounded-3xl bg-slate-950 text-white p-5 text-center">
-                    <div class="text-3xl font-black">{{ user.games_played_count }}</div>
-                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Games Played</div>
+                    <div class="text-3xl font-black">{{ attended_count }}</div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">
+                        Attended
+                    </div>
                 </div>
 
                 <div class="rounded-3xl bg-emerald-50 text-emerald-800 p-5 text-center">
                     <div class="text-3xl font-black">{{ upcoming_registrations|length }}</div>
-                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Upcoming</div>
+                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">
+                        Upcoming
+                    </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- Contact -->
+        <!-- Contact Info -->
         <div class="mt-6 border-t border-slate-100 pt-5 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div class="rounded-2xl bg-slate-50 p-4">
                 <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
                     Mobile
                 </div>
+
                 {% if user.mobile_number %}
-                    <div class="font-semibold text-slate-800">{{ user.mobile_number }}</div>
+                    <div class="font-semibold text-slate-800">
+                        {{ user.mobile_number }}
+                    </div>
                 {% else %}
                     <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
                         Missing mobile
@@ -83,8 +91,11 @@
                 <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">
                     Email
                 </div>
+
                 {% if user.email %}
-                    <div class="font-semibold text-slate-800 break-all">{{ user.email }}</div>
+                    <div class="font-semibold text-slate-800 break-all">
+                        {{ user.email }}
+                    </div>
                 {% else %}
                     <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
                         Missing email
@@ -92,6 +103,26 @@
                 {% endif %}
             </div>
         </div>
+
+      <!-- Friendly Attendance Summary -->
+      <div class="mt-4 rounded-3xl bg-slate-50 p-5">
+         <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+             Attendance Rate
+         </div>
+
+      <div class="mt-1 flex items-end gap-2">
+         <div class="text-3xl font-black text-slate-950">
+             {{ attendance_rate }}%
+         </div>
+         <div class="pb-1 text-sm text-slate-500">
+             from {{ attended_count }} attended game{% if attended_count != 1 %}s{% endif %}
+         </div>
+      </div>
+
+      <p class="mt-2 text-sm text-slate-500">
+          Based on closed event records.
+      </p>
+      </div>	
     </div>
 
     <!-- Upcoming Games -->
@@ -111,6 +142,7 @@
                             <div class="font-black text-slate-950">
                                 {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
                             </div>
+
                             <div class="text-sm text-slate-600 mt-1">
                                 {{ reg.event.time_range_display }} · {{ reg.event.location }}
                             </div>
@@ -158,6 +190,7 @@
                             <div class="font-black text-slate-950">
                                 {{ reg.event.weekday_display }}, {{ reg.event.date_display }}
                             </div>
+
                             <div class="text-sm text-slate-600 mt-1">
                                 {{ reg.event.time_range_display }} · {{ reg.event.location }}
                             </div>

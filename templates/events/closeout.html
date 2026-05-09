@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Event Closeout{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Page Header -->
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Event Closeout
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                {{ event.weekday_display }}, {{ event.date_display }}
+            </h1>
+            <p class="mt-2 text-slate-500">
+                Confirm final attendance. Closed closeouts are locked and view-only.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'event_detail' event.id %}"
+               class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                ← Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-2xl font-black text-slate-950">
+                        {{ event.time_range_display }}
+                    </h2>
+
+                    {% if closeout.status == "closed_manual" %}
+                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                            Closed Manual
+                        </span>
+                    {% elif closeout.status == "closed_auto" %}
+                        <span class="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">
+                            Closed Auto
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                            Pending Closeout
+                        </span>
+                    {% endif %}
+                </div>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    {{ event.location }} · ${{ event.amount_payable }} per pax
+                </p>
+
+                {% if closeout.is_closed %}
+                    <p class="mt-3 text-sm text-slate-500">
+                        Closed on {{ closeout.closed_at|date:"d M Y, g:i A" }}
+                        {% if closeout.closed_by %}
+                            by {{ closeout.closed_by.username }}
+                        {% else %}
+                            by system
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full lg:w-auto lg:min-w-[520px]">
+                <div class="rounded-3xl bg-slate-950 text-white p-5 text-center">
+                    <div class="text-3xl font-black">{{ summary.total }}</div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Total</div>
+                </div>
+
+                <div class="rounded-3xl bg-emerald-50 text-emerald-800 p-5 text-center">
+                    <div class="text-3xl font-black">{{ summary.attended }}</div>
+                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Attended</div>
+                </div>
+
+                <div class="rounded-3xl bg-red-50 text-red-800 p-5 text-center">
+                    <div class="text-3xl font-black">{{ summary.absent }}</div>
+                    <div class="text-xs uppercase tracking-wide text-red-700 mt-1">Absent</div>
+                </div>
+
+                <div class="rounded-3xl bg-blue-50 text-blue-800 p-5 text-center">
+                    <div class="text-3xl font-black">{{ summary.excused }}</div>
+                    <div class="text-xs uppercase tracking-wide text-blue-700 mt-1">Excused</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not closeout.is_closed %}
+        <!-- Add Player -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+            <h2 class="text-xl font-black text-slate-950">Add Player</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Add last-minute attendees or walk-ins to the closeout.
+            </p>
+
+            <form method="post" class="mt-5 flex flex-col md:flex-row gap-3">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_player">
+
+                <select name="user_id"
+                    class="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    {% for user_obj in available_users %}
+                        <option value="{{ user_obj.id }}">
+                            {{ user_obj.get_full_name|default:user_obj.username }} (@{{ user_obj.username }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit"
+                    class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                    Add Player
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- Attendance -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-xl font-black text-slate-950">Attendance</h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Everyone defaults to attended. Only change exceptions.
+                </p>
+            </div>
+        </div>
+
+        {% if active_attendances %}
+            {% if closeout.is_closed %}
+                <div class="space-y-3">
+                    {% for attendance in active_attendances %}
+                        <div class="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                                <div>
+                                    <div class="font-black text-slate-950">
+                                        {{ attendance.user.get_full_name|default:attendance.user.username }}
+                                    </div>
+                                    <div class="text-sm text-slate-500 mt-1">
+                                        @{{ attendance.user.username }}
+                                        {% if attendance.source == "manual_add" %}
+                                            · manually added
+                                        {% elif attendance.source == "auto_close" %}
+                                            · auto-closed
+                                        {% endif %}
+                                    </div>
+
+                                    {% if attendance.notes %}
+                                        <div class="mt-3 rounded-2xl bg-white p-3 text-sm text-slate-600">
+                                            {{ attendance.notes }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if attendance.status == "attended" %}
+                                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                        Attended
+                                    </span>
+                                {% elif attendance.status == "absent" %}
+                                    <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                                        Absent
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                                        Excused
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+
+                    {% for attendance in active_attendances %}
+                        <div class="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+                            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="font-black text-slate-950">
+                                        {{ attendance.user.get_full_name|default:attendance.user.username }}
+                                    </div>
+                                    <div class="text-sm text-slate-500 mt-1">
+                                        @{{ attendance.user.username }}
+                                        {% if attendance.source == "manual_add" %}
+                                            · manually added
+                                        {% endif %}
+                                    </div>
+
+                                    <input
+                                        type="text"
+                                        name="notes_{% widthratio attendance.id 1 1 %}"
+                                        value="{{ attendance.notes }}"
+                                        placeholder="Optional notes"
+                                        class="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    >
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    {% for value, label in attendance_status_choices %}
+                                        <label class="cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="status_{{ attendance.id }}"
+                                                value="{{ value }}"
+                                                class="peer hidden"
+                                                {% if attendance.status == value %}checked{% endif %}
+                                            >
+                                            <span class="inline-flex items-center justify-center px-4 py-2 rounded-full border text-sm font-bold
+                                                peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600
+                                                border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+                                                {{ label }}
+                                            </span>
+                                        </label>
+                                    {% endfor %}
+
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="remove_player"
+                                        onclick="return confirm('Remove this player from closeout?')"
+                                        class="inline-flex items-center justify-center px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-bold hover:bg-red-100">
+                                        Remove
+                                    </button>
+
+                                    <input type="hidden" name="attendance_id" value="{{ attendance.id }}">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <div class="flex flex-col sm:flex-row gap-3 pt-3">
+                        <button type="submit" name="action" value="save"
+                            class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                            Save Attendance
+                        </button>
+
+                        <button type="submit" name="action" value="close"
+                            onclick="return confirm('Close this event? Attendance cannot be edited after closing.')"
+                            class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                            Close Event
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        {% else %}
+            <div class="rounded-3xl bg-slate-50 p-6 text-sm text-slate-500">
+                No attendance records yet.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

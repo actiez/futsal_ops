@@ -37,12 +37,34 @@
                 Edit Event
             </a>
 
+	{% if closeout_available %}
+    	<a href="{% url 'event_closeout' event.id %}"
+       class="inline-flex items-center justify-center px-5 py-3 rounded-full
+       {% if closeout and closeout.is_closed %}
+           bg-slate-950 text-white hover:bg-slate-800
+       {% elif closeout %}
+           bg-amber-500 text-white hover:bg-amber-600
+       {% else %}
+           bg-emerald-600 text-white hover:bg-emerald-700
+       {% endif %}
+       text-sm font-bold">
+        {% if closeout and closeout.is_closed %}
+            View Closeout
+        {% elif closeout %}
+            Continue Closeout
+        {% else %}
+            Start Closeout
+        {% endif %}
+    	</a>
+	{% endif %}
+
             <a href="{% url 'event_delete' event.id %}"
                class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-red-600 text-white text-sm font-bold hover:bg-red-700">
                 Delete
             </a>
         </div>
     </div>
+
 
     <!-- Event Overview -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">

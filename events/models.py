@@ -132,3 +132,146 @@ class Event(models.Model):
             "completed": "Completed",
         }
         return labels.get(self.effective_status, self.effective_status)
+    
+class EventCloseout(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_CLOSED_MANUAL = "closed_manual"
+    STATUS_CLOSED_AUTO = "closed_auto"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_CLOSED_MANUAL, "Closed Manually"),
+        (STATUS_CLOSED_AUTO, "Closed Automatically"),
+    ]
+
+    event = models.OneToOneField(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="closeout",
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_event_closeouts",
+    )
+
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="closed_event_closeouts",
+    )
+
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_closed(self):
+        return self.status in {
+            self.STATUS_CLOSED_MANUAL,
+            self.STATUS_CLOSED_AUTO,
+        }
+
+    def __str__(self):
+        return f"{self.event} - {self.status}"
+
+
+class EventAttendance(models.Model):
+    STATUS_ATTENDED = "attended"
+    STATUS_ABSENT = "absent"
+    STATUS_EXCUSED = "excused"
+
+    STATUS_CHOICES = [
+        (STATUS_ATTENDED, "Attended"),
+        (STATUS_ABSENT, "Absent"),
+        (STATUS_EXCUSED, "Excused"),
+    ]
+
+    SOURCE_SNAPSHOT = "snapshot"
+    SOURCE_MANUAL_ADD = "manual_add"
+    SOURCE_AUTO_CLOSE = "auto_close"
+
+    SOURCE_CHOICES = [
+        (SOURCE_SNAPSHOT, "Snapshot"),
+        (SOURCE_MANUAL_ADD, "Manual Add"),
+        (SOURCE_AUTO_CLOSE, "Auto Close"),
+    ]
+
+    closeout = models.ForeignKey(
+        EventCloseout,
+        on_delete=models.CASCADE,
+        related_name="attendances",
+    )
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="attendances",
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="event_attendances",
+    )
+
+    registration = models.ForeignKey(
+        "registrations.EventRegistration",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attendance_records",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_ATTENDED,
+    )
+
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_SNAPSHOT,
+    )
+
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_event_attendances",
+    )
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="updated_event_attendances",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("closeout", "user")
+        ordering = ["user__first_name", "user__last_name", "user__username"]
+
+    def __str__(self):
+        return f"{self.event} - {self.user} - {self.status}"

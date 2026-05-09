@@ -11,7 +11,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
-from events.models import Event
+from events.models import Event, EventAttendance, EventCloseout
 from accounts.models import User
 from registrations.models import EventRegistration
 
@@ -51,47 +51,88 @@ def admin_user_profile(request, user_id):
     ).select_related("event").order_by("-event__start_datetime")[:5]
 
     # 🧠 INSIGHTS CALCULATION
+    # Closeout is the new source of truth.
+    # Fallback to old registration logic only if this player has no closeout data yet.
 
-    all_regs = EventRegistration.objects.filter(user=profile_user).select_related("event")
+    closed_closeout_statuses = [
+        EventCloseout.STATUS_CLOSED_MANUAL,
+        EventCloseout.STATUS_CLOSED_AUTO,
+    ]
 
-    now = timezone.now()
+    attendance_records = (
+        EventAttendance.objects
+        .filter(
+            user=profile_user,
+            is_active=True,
+            closeout__status__in=closed_closeout_statuses,
+        )
+        .select_related("event", "closeout")
+    )
 
-    past_regs = [r for r in all_regs if r.event.end_datetime and r.event.end_datetime < now]
+    closeout_total = attendance_records.count()
+    attended = attendance_records.filter(status=EventAttendance.STATUS_ATTENDED).count()
+    absent = attendance_records.filter(status=EventAttendance.STATUS_ABSENT).count()
+    excused = attendance_records.filter(status=EventAttendance.STATUS_EXCUSED).count()
 
-    # --- 1. Registration Outcome ---
-    total_registered = len(past_regs)
-    played = len([r for r in past_regs if r.status == "playing"])
-    not_played = total_registered - played
+    # Excused should not punish reliability.
+    reliability_base = attended + absent
 
-    # --- 2. Confirmed Reliability ---
-    confirmed_playing = len([r for r in past_regs if r.status == "playing"])
-    completed = confirmed_playing  # same logic for now
-    dropped_after_confirmed = 0  # placeholder (we refine later)
+    attendance_rate = 0
+    if reliability_base > 0:
+        attendance_rate = round((attended / reliability_base) * 100)
 
-    # --- 3. Waiting Conversion ---
-    waiting_regs = [r for r in past_regs if r.status == "waiting"]
-    waiting_total = len(waiting_regs)
-    waiting_converted = 0  # placeholder (needs status logs later)
+    no_show_rate = 0
+    if reliability_base > 0:
+        no_show_rate = round((absent / reliability_base) * 100)
 
-    # --- Derived Metrics ---
-    completion_rate = 0
-    if total_registered > 0:
-        completion_rate = round((played / total_registered) * 100)
+    reliability_tag = "New Sample"
 
-    reliability_tag = "Neutral"
-
-    if total_registered >= 3:  # avoid small sample bias
-        if completion_rate >= 80:
+    if reliability_base >= 3:
+        if attendance_rate >= 85:
             reliability_tag = "Reliable Player ✅"
-        elif completion_rate >= 50:
+        elif attendance_rate >= 60:
             reliability_tag = "Average Player ⚖️"
         else:
-            reliability_tag = "Unreliable ❌"
+            reliability_tag = "Watchlist ⚠️"
 
+    # Fallback for old data before closeout existed
+    if closeout_total == 0:
+        all_regs = EventRegistration.objects.filter(user=profile_user).select_related("event")
+
+        now = timezone.now()
+        past_regs = [
+            r for r in all_regs
+            if r.event.end_datetime and r.event.end_datetime < now
+        ]
+
+        closeout_total = len(past_regs)
+        attended = len([r for r in past_regs if r.status == EventRegistration.STATUS_PLAYING])
+        absent = closeout_total - attended
+        excused = 0
+
+        reliability_base = attended + absent
+
+        attendance_rate = 0
+        if reliability_base > 0:
+            attendance_rate = round((attended / reliability_base) * 100)
+
+        no_show_rate = 0
+        if reliability_base > 0:
+            no_show_rate = round((absent / reliability_base) * 100)
+
+        reliability_tag = "Legacy Data"
+
+        if reliability_base >= 3:
+            if attendance_rate >= 85:
+                reliability_tag = "Reliable Player ✅"
+            elif attendance_rate >= 60:
+                reliability_tag = "Average Player ⚖️"
+            else:
+                reliability_tag = "Watchlist ⚠️"
 
     registration_delays = [
         reg.registration_delay_minutes
-        for reg in all_regs
+        for reg in EventRegistration.objects.filter(user=profile_user).select_related("event")
         if reg.registration_delay_minutes is not None
     ]
 
@@ -100,26 +141,34 @@ def admin_user_profile(request, user_id):
 
     if registration_delays:
         avg_registration_speed = round(sum(registration_delays) / len(registration_delays))
-        fastest_registration_speed = min(registration_delays)    
-
+        fastest_registration_speed = min(registration_delays)
 
     context = {
         "profile_user": profile_user,
         "current_registrations": current_registrations,
         "recent_registrations": recent_registrations,
         "insights": {
-            "total_registered": total_registered,
-            "played": played,
-            "not_played": not_played,
-            "confirmed_playing": confirmed_playing,
-            "completed": completed,
-            "dropped_after_confirmed": dropped_after_confirmed,
-            "waiting_total": waiting_total,
-            "waiting_converted": waiting_converted,
-            "completion_rate": completion_rate,
+            "closeout_total": closeout_total,
+            "attended": attended,
+            "absent": absent,
+            "excused": excused,
+            "attendance_rate": attendance_rate,
+            "no_show_rate": no_show_rate,
+            "reliability_base": reliability_base,
             "reliability_tag": reliability_tag,
             "avg_registration_speed": avg_registration_speed,
             "fastest_registration_speed": fastest_registration_speed,
+
+            # Backward-compatible keys for existing template sections
+            "total_registered": closeout_total,
+            "played": attended,
+            "not_played": absent,
+            "confirmed_playing": reliability_base,
+            "completed": attended,
+            "dropped_after_confirmed": absent,
+            "waiting_total": 0,
+            "waiting_converted": 0,
+            "completion_rate": attendance_rate,
         }
     }
 
@@ -128,6 +177,38 @@ def admin_user_profile(request, user_id):
 @login_required
 def profile_view(request):
     user = request.user
+
+    closed_closeout_statuses = [
+        EventCloseout.STATUS_CLOSED_MANUAL,
+        EventCloseout.STATUS_CLOSED_AUTO,
+    ]
+
+    attendance_records = (
+        EventAttendance.objects
+        .filter(
+            user=user,
+            is_active=True,
+            closeout__status__in=closed_closeout_statuses,
+        )
+    )
+
+    attended_count = attendance_records.filter(
+        status=EventAttendance.STATUS_ATTENDED
+    ).count()
+
+    absent_count = attendance_records.filter(
+        status=EventAttendance.STATUS_ABSENT
+    ).count()
+
+    excused_count = attendance_records.filter(
+        status=EventAttendance.STATUS_EXCUSED
+    ).count()
+
+    attendance_base = attended_count + absent_count
+
+    attendance_rate = 0
+    if attendance_base > 0:
+        attendance_rate = round((attended_count / attendance_base) * 100)
 
     # upcoming registrations
     upcoming_registrations = (
@@ -160,6 +241,10 @@ def profile_view(request):
         "user": user,
         "upcoming_registrations": upcoming_registrations,
         "recent_events": recent_events,
+        "attended_count": attended_count,
+        "absent_count": absent_count,
+        "excused_count": excused_count,
+        "attendance_rate": attendance_rate,
     }
 
     return render(request, "accounts/profile.html", context)

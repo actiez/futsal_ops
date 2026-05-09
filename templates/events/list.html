@@ -101,7 +101,14 @@
                            class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
                             View
                         </a>
-
+		  
+		    {% if event.end_datetime <= now and event.status != "cancelled" %}
+    			<a href="{% url 'event_closeout' event.id %}"
+       				class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+        			  Closeout
+    			</a>
+		    {% endif %}				
+	
                         <a href="{% url 'event_edit' event.id %}"
                            class="inline-flex items-center justify-center px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
                             Edit

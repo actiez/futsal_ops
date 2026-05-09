@@ -39,12 +39,12 @@
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
             <!-- Identity -->
-            <div class="flex items-start gap-4">
-                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm">
+            <div class="flex items-start gap-4 flex-1 min-w-0">
+                <div class="h-16 w-16 rounded-3xl bg-emerald-600 text-white flex items-center justify-center text-2xl font-black shadow-sm shrink-0">
                     {{ profile_user.username|first|upper }}
                 </div>
 
-                <div>
+                <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-950">
                             {{ profile_user.get_full_name|default:profile_user.username }}
@@ -116,15 +116,15 @@
             </div>
 
             <!-- Stat Tiles -->
-            <div class="grid grid-cols-2 gap-3 lg:min-w-[260px]">
+            <div class="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[260px]">
                 <div class="rounded-3xl bg-slate-950 text-white p-5 text-center">
-                    <div class="text-3xl font-black">{{ profile_user.games_played_count }}</div>
-                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Games Played</div>
+                    <div class="text-3xl font-black">{{ insights.attended }}</div>
+                    <div class="text-xs uppercase tracking-wide text-slate-300 mt-1">Attended</div>
                 </div>
 
                 <div class="rounded-3xl bg-emerald-50 text-emerald-800 p-5 text-center">
-                    <div class="text-3xl font-black">{{ insights.completion_rate }}%</div>
-                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Completion</div>
+                    <div class="text-3xl font-black">{{ insights.attendance_rate }}%</div>
+                    <div class="text-xs uppercase tracking-wide text-emerald-700 mt-1">Attendance</div>
                 </div>
             </div>
 
@@ -137,7 +137,7 @@
             <div>
                 <h2 class="text-xl font-black text-slate-950">Player Insights</h2>
                 <p class="text-sm text-slate-500 mt-1">
-                    Early reliability signals based on registration and event history.
+                    Reliability signals based on event closeout attendance records.
                 </p>
             </div>
 
@@ -148,64 +148,75 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
-            <!-- Registration Outcome -->
+            <!-- Attendance Record -->
             <div class="rounded-3xl bg-slate-50 p-5">
                 <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
-                    Registration Outcome
+                    Attendance Record
                 </div>
-                <div class="mt-3 text-3xl font-black text-slate-950">
-                    {{ insights.total_registered }}
-                </div>
-                <div class="mt-1 text-sm text-slate-500">Past registrations</div>
 
-                <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div class="mt-3 text-3xl font-black text-slate-950">
+                    {{ insights.closeout_total }}
+                </div>
+                <div class="mt-1 text-sm text-slate-500">
+                    Closed event records
+                </div>
+
+                <div class="mt-4 grid grid-cols-3 gap-2 text-sm">
                     <div class="rounded-2xl bg-white p-3">
-                        <div class="font-black text-emerald-700">{{ insights.played }}</div>
-                        <div class="text-xs text-slate-500">Played</div>
+                        <div class="font-black text-emerald-700">{{ insights.attended }}</div>
+                        <div class="text-xs text-slate-500">Attended</div>
                     </div>
+
                     <div class="rounded-2xl bg-white p-3">
-                        <div class="font-black text-red-700">{{ insights.not_played }}</div>
-                        <div class="text-xs text-slate-500">Not Played</div>
+                        <div class="font-black text-red-700">{{ insights.absent }}</div>
+                        <div class="text-xs text-slate-500">Absent</div>
+                    </div>
+
+                    <div class="rounded-2xl bg-white p-3">
+                        <div class="font-black text-blue-700">{{ insights.excused }}</div>
+                        <div class="text-xs text-slate-500">Excused</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Confirmed Reliability -->
+            <!-- Attendance Rate -->
             <div class="rounded-3xl bg-slate-50 p-5">
                 <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
-                    Confirmed Reliability
+                    Attendance Rate
                 </div>
-                <div class="mt-3 text-3xl font-black text-slate-950">
-                    {{ insights.confirmed_playing }}
-                </div>
-                <div class="mt-1 text-sm text-slate-500">Confirmed playing</div>
 
-                <div class="mt-4 space-y-2 text-sm text-slate-700">
-                    <div class="flex justify-between">
-                        <span>Completed</span>
-                        <span class="font-bold">{{ insights.completed }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Dropped</span>
-                        <span class="font-bold">{{ insights.dropped_after_confirmed }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Waiting Conversion -->
-            <div class="rounded-3xl bg-slate-50 p-5">
-                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
-                    Waiting Conversion
-                </div>
                 <div class="mt-3 text-3xl font-black text-slate-950">
-                    {{ insights.waiting_total }}
+                    {{ insights.attendance_rate }}%
                 </div>
-                <div class="mt-1 text-sm text-slate-500">Waiting records</div>
+                <div class="mt-1 text-sm text-slate-500">
+                    Excused records excluded
+                </div>
 
                 <div class="mt-4 rounded-2xl bg-white p-3 text-sm">
                     <div class="flex justify-between text-slate-700">
-                        <span>Converted</span>
-                        <span class="font-bold">{{ insights.waiting_converted }}</span>
+                        <span>Reliability base</span>
+                        <span class="font-bold">{{ insights.reliability_base }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No-show Signal -->
+            <div class="rounded-3xl bg-slate-50 p-5">
+                <div class="text-xs uppercase tracking-wide text-slate-400 font-bold">
+                    No-show Signal
+                </div>
+
+                <div class="mt-3 text-3xl font-black text-slate-950">
+                    {{ insights.no_show_rate }}%
+                </div>
+                <div class="mt-1 text-sm text-slate-500">
+                    Absent rate from counted records
+                </div>
+
+                <div class="mt-4 rounded-2xl bg-white p-3 text-sm">
+                    <div class="flex justify-between text-slate-700">
+                        <span>Absent</span>
+                        <span class="font-bold">{{ insights.absent }}</span>
                     </div>
                 </div>
             </div>
@@ -263,13 +274,11 @@
 
     <!-- Current Activity -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-            <div>
-                <h2 class="text-xl font-black text-slate-950">Current Activity</h2>
-                <p class="text-sm text-slate-500 mt-1">
-                    Upcoming registrations for this player.
-                </p>
-            </div>
+        <div>
+            <h2 class="text-xl font-black text-slate-950">Current Activity</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Upcoming registrations for this player.
+            </p>
         </div>
 
         <div class="mt-5 space-y-4">
