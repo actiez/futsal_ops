@@ -30,14 +30,14 @@ def get_default_status_for_user(event, user):
     if user.player_type == user.PLAYER_CORE:
         if has_playing_slot_available(event):
             return EventRegistration.STATUS_PLAYING
-        if has_waiting_slot_available(event):
-            return EventRegistration.STATUS_WAITING
+
         return EventRegistration.STATUS_INTERESTED
 
     if user.player_type == user.PLAYER_NAUGHTY:
         return EventRegistration.STATUS_BACKUP
 
     return EventRegistration.STATUS_INTERESTED
+
 
 def register_user_for_event(event, user, changed_by=None):
     existing = EventRegistration.objects.filter(event=event, user=user).first()
@@ -104,6 +104,8 @@ def auto_promote_waiting(event, changed_by=None):
 
 def auto_fill_waiting_from_interested(event, changed_by=None):
     while has_waiting_slot_available(event):
+        # Core players get priority only when filling Waiting from Interested.
+        # Within core players, keep strict sequence order.
         next_interested = (
             EventRegistration.objects
             .filter(
@@ -111,10 +113,12 @@ def auto_fill_waiting_from_interested(event, changed_by=None):
                 status=EventRegistration.STATUS_INTERESTED,
                 user__player_type="core",
             )
-            .order_by("sequence_number")
+            .order_by("sequence_number", "id")
             .first()
         )
 
+        # If no core players are interested, fill by strict sequence order
+        # among regular/new players.
         if not next_interested:
             next_interested = (
                 EventRegistration.objects
@@ -123,7 +127,7 @@ def auto_fill_waiting_from_interested(event, changed_by=None):
                     status=EventRegistration.STATUS_INTERESTED,
                     user__player_type__in=["regular", "new"],
                 )
-                .order_by("sequence_number")
+                .order_by("sequence_number", "id")
                 .first()
             )
 
@@ -140,7 +144,6 @@ def auto_fill_waiting_from_interested(event, changed_by=None):
             new_status=EventRegistration.STATUS_WAITING,
             changed_by=changed_by,
         )
-
 
 def rebalance_event_slots(event, changed_by=None):
     auto_promote_waiting(event, changed_by=changed_by)
