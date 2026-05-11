@@ -9,6 +9,18 @@ def get_next_sequence_number(event):
     )
     return 1 if not last_registration else last_registration.sequence_number + 1
 
+def get_next_waiting_sequence_number(event):
+    last_waiting = (
+        EventRegistration.objects
+        .filter(event=event, status=EventRegistration.STATUS_WAITING)
+        .order_by("-sequence_number", "-id")
+        .first()
+    )
+
+    if last_waiting:
+        return last_waiting.sequence_number + 1
+
+    return get_next_sequence_number(event)
 
 def has_playing_slot_available(event):
     playing_count = EventRegistration.objects.filter(
@@ -136,6 +148,7 @@ def auto_fill_waiting_from_interested(event, changed_by=None):
 
         old_status = next_interested.status
         next_interested.status = EventRegistration.STATUS_WAITING
+        next_interested.sequence_number = get_next_waiting_sequence_number(event)
         next_interested.save()
 
         EventStatusLog.objects.create(
@@ -157,6 +170,10 @@ def update_registration_status(registration, new_status, changed_by=None):
         return registration, "no_change"
 
     registration.status = new_status
+
+    if new_status == EventRegistration.STATUS_WAITING and old_status != EventRegistration.STATUS_WAITING:
+        registration.sequence_number = get_next_waiting_sequence_number(registration.event)
+
     registration.save()
 
     EventStatusLog.objects.create(
