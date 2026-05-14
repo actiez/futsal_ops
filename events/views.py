@@ -130,7 +130,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             "Register/Leave Game here:",
             join_url,
             "",
-            f"Playing ({playing_regs.count()}):",
+            f"Playing ({playing_regs.count()}/{event.playing_slots}):",
         ]
 
         full_summary_lines.extend(playing_lines or ["-"])
@@ -147,7 +147,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             event.time_range_display,
             event.location,
             "",
-            f"Playing ({playing_regs.count()}):",
+            f"Playing ({playing_regs.count()}/{event.playing_slots}):",
         ]
 
         reminder_summary_lines.extend(playing_lines or ["-"])
