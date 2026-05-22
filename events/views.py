@@ -80,7 +80,6 @@ class EventCreateView(AdminRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
-
 class EventDetailView(AdminRequiredMixin, DetailView):
     model = Event
     template_name = "events/detail.html"
@@ -109,10 +108,44 @@ class EventDetailView(AdminRequiredMixin, DetailView):
         context["playing_full"] = playing_regs.count() >= event.playing_slots
         context["waiting_full"] = waiting_regs.count() >= event.waiting_slots
 
+        def whatsapp_mention_for_user(user):
+            mobile = (user.mobile_number or "").strip()
+
+            mobile = (
+                mobile
+                .replace("+", "")
+                .replace(" ", "")
+                .replace("-", "")
+                .replace("(", "")
+                .replace(")", "")
+            )
+
+            if mobile and mobile.isdigit():
+                if mobile.startswith("65"):
+                    return f"@{mobile}"
+
+                if len(mobile) == 8:
+                    return f"@65{mobile}"
+
+                return f"@{mobile}"
+
+            return ""
+
         playing_lines = [
             f"{idx}. {reg.user.get_full_name() or reg.user.username}"
             for idx, reg in enumerate(playing_regs, start=1)
         ]
+
+        reminder_playing_lines = []
+
+        for idx, reg in enumerate(playing_regs, start=1):
+            display_name = reg.user.get_full_name() or reg.user.username
+            mention = whatsapp_mention_for_user(reg.user)
+
+            if mention:
+                reminder_playing_lines.append(f"{idx}. {display_name} {mention}")
+            else:
+                reminder_playing_lines.append(f"{idx}. {display_name}")
 
         waiting_lines = [
             f"{idx}. {reg.user.get_full_name() or reg.user.username}"
@@ -150,7 +183,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             f"Playing ({playing_regs.count()}/{event.playing_slots}):",
         ]
 
-        reminder_summary_lines.extend(playing_lines or ["-"])
+        reminder_summary_lines.extend(reminder_playing_lines or ["-"])
 
         invite_lines = [
             "⚽ Futsal Session",
@@ -163,6 +196,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             "Join here:",
             join_url,
         ]
+
         settings_obj = SystemSettings.get_solo()
 
         context["weekly_limit_enabled"] = settings_obj.only_allow_once_per_week_registration
@@ -190,7 +224,6 @@ class EventDetailView(AdminRequiredMixin, DetailView):
         context["closeout_available"] = closeout_available
 
         return context
-
 
 class EventUpdateView(AdminRequiredMixin, UpdateView):
     model = Event
