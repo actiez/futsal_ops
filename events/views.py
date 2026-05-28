@@ -121,16 +121,13 @@ class EventDetailView(AdminRequiredMixin, DetailView):
             )
 
             if mobile and mobile.isdigit():
-                if mobile.startswith("65"):
-                    return f"@{mobile}"
-
-                if len(mobile) == 8:
-                    return f"@65{mobile}"
+                if mobile.startswith("65") and len(mobile) == 10:
+                    mobile = mobile[2:]
 
                 return f"@{mobile}"
 
             return ""
-
+        
         playing_lines = [
             f"{idx}. {reg.user.get_full_name() or reg.user.username}"
             for idx, reg in enumerate(playing_regs, start=1)
