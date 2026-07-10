@@ -20,12 +20,12 @@ from .forms import UserRegisterForm, UserProfileUpdateForm
 
 @login_required
 def admin_user_profile(request, user_id):
-    if not request.user.is_admin_level():
-        raise PermissionDenied("You do not have access to this page.")
+    if not request.user.is_superadmin_level():
+        raise PermissionDenied("Only superadmin can access user details.")
 
     profile_user = get_object_or_404(User, id=user_id)
 
-    # 🆕 HANDLE POST (save notes)
+    # HANDLE POST: save admin notes
     if request.method == "POST":
         if request.POST.get("action") == "save_admin_notes":
             profile_user.admin_notes = request.POST.get("admin_notes", "")
@@ -33,7 +33,6 @@ def admin_user_profile(request, user_id):
             messages.success(request, "Admin notes updated successfully.")
             return redirect("admin_user_profile", user_id=profile_user.id)
 
-    # existing logic
     current_registrations = (
         EventRegistration.objects
         .filter(
@@ -45,12 +44,17 @@ def admin_user_profile(request, user_id):
         .order_by("event__start_datetime")
     )
 
-    recent_registrations = EventRegistration.objects.filter(
-        user=profile_user,
-        event__start_datetime__lt=timezone.now()
-    ).select_related("event").order_by("-event__start_datetime")[:5]
+    recent_registrations = (
+        EventRegistration.objects
+        .filter(
+            user=profile_user,
+            event__start_datetime__lt=timezone.now()
+        )
+        .select_related("event")
+        .order_by("-event__start_datetime")[:5]
+    )
 
-    # 🧠 INSIGHTS CALCULATION
+    # INSIGHTS CALCULATION
     # Closeout is the new source of truth.
     # Fallback to old registration logic only if this player has no closeout data yet.
 
@@ -101,12 +105,15 @@ def admin_user_profile(request, user_id):
 
         now = timezone.now()
         past_regs = [
-            r for r in all_regs
-            if r.event.end_datetime and r.event.end_datetime < now
+            reg for reg in all_regs
+            if reg.event.end_datetime and reg.event.end_datetime < now
         ]
 
         closeout_total = len(past_regs)
-        attended = len([r for r in past_regs if r.status == EventRegistration.STATUS_PLAYING])
+        attended = len([
+            reg for reg in past_regs
+            if reg.status == EventRegistration.STATUS_PLAYING
+        ])
         absent = closeout_total - attended
         excused = 0
 
@@ -169,10 +176,11 @@ def admin_user_profile(request, user_id):
             "waiting_total": 0,
             "waiting_converted": 0,
             "completion_rate": attendance_rate,
-        }
+        },
     }
 
     return render(request, "accounts/admin_profile.html", context)
+
 
 @login_required
 def profile_view(request):
@@ -210,7 +218,6 @@ def profile_view(request):
     if attendance_base > 0:
         attendance_rate = round((attended_count / attendance_base) * 100)
 
-    # upcoming registrations
     upcoming_registrations = (
         EventRegistration.objects
         .filter(
@@ -225,7 +232,6 @@ def profile_view(request):
     for reg in upcoming_registrations:
         reg.visible_status = get_player_visible_status(reg, reg.event)
 
-    # recent events
     recent_events = (
         EventRegistration.objects
         .filter(
@@ -249,6 +255,7 @@ def profile_view(request):
 
     return render(request, "accounts/profile.html", context)
 
+
 @login_required
 def profile_edit_view(request):
     if request.method == "POST":
@@ -268,6 +275,7 @@ def profile_edit_view(request):
             "form": form,
         },
     )
+
 
 def get_player_visible_status(registration, event):
     if not registration:
@@ -299,7 +307,7 @@ def get_player_visible_status(registration, event):
             "queue_number": queue_number,
         }
 
-    # interested and backup are both player-facing "Pending"
+    # Interested and backup are both player-facing "Pending"
     return {
         "label": "Pending",
         "message": "Your status is pending.",
@@ -341,6 +349,7 @@ class RegisterView(View):
 
             if next_url:
                 return redirect(f"{reverse('login')}?next={next_url}")
+
             return redirect("login")
 
         return render(
@@ -400,24 +409,30 @@ class CustomLoginView(LoginView):
             next_url = request.GET.get("next")
             if next_url:
                 return redirect(next_url)
+
             return redirect(self._redirect_user(request.user))
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         next_url = self.get_redirect_url()
+
         if next_url:
             return next_url
+
         return reverse(self._redirect_user(self.request.user))
 
     def _redirect_user(self, user):
-        if user.is_superuser or user.is_staff:
+        if user.is_admin_level():
             return "event_list"
+
         return "player_home"
-    
+
+
 @login_required
 def user_list_view(request):
-    if not request.user.is_admin_level():
-        raise PermissionDenied("You do not have access to this page.")
+    if not request.user.is_superadmin_level():
+        raise PermissionDenied("Only superadmin can access user details.")
 
     search_query = request.GET.get("q", "").strip()
 
@@ -440,6 +455,7 @@ def user_list_view(request):
             "search_query": search_query,
         },
     )
+
 
 @login_required
 def generate_password_reset_link(request, user_id):
