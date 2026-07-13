@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "dashboard",
     "system_settings",
     "bot",
+    "standing_orders",
 ]
 
 MIDDLEWARE = [

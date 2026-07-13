@@ -80,10 +80,19 @@ class EventCreateView(AdminRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
-class EventDetailView(AdminRequiredMixin, DetailView):
+class EventDetailView(DetailView):
     model = Event
     template_name = "events/detail.html"
     context_object_name = "event"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated and user.is_admin_level():
+            return queryset
+
+        return queryset.filter(is_private=False)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -100,10 +109,21 @@ class EventDetailView(AdminRequiredMixin, DetailView):
         waiting_regs = registrations.filter(status=EventRegistration.STATUS_WAITING)
         backup_regs = registrations.filter(status=EventRegistration.STATUS_BACKUP)
 
+        user_registration = None
+
+        if self.request.user.is_authenticated:
+            user_registration = (
+                EventRegistration.objects
+                .filter(event=event, user=self.request.user)
+                .exclude(status=EventRegistration.STATUS_REMOVED)
+                .first()
+            )
+
         context["interested_regs"] = interested_regs
         context["playing_regs"] = playing_regs
         context["waiting_regs"] = waiting_regs
         context["backup_regs"] = backup_regs
+        context["user_registration"] = user_registration
 
         context["playing_full"] = playing_regs.count() >= event.playing_slots
         context["waiting_full"] = waiting_regs.count() >= event.waiting_slots
@@ -127,7 +147,7 @@ class EventDetailView(AdminRequiredMixin, DetailView):
                 return f"@{mobile}"
 
             return ""
-        
+
         playing_lines = [
             f"{idx}. {reg.user.get_full_name() or reg.user.username}"
             for idx, reg in enumerate(playing_regs, start=1)

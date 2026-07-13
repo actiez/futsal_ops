@@ -31,78 +31,91 @@
                 <!-- Name + Type -->
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <a href="{% url 'admin_user_profile' reg.user.id %}"
-                           class="block text-sm font-black text-slate-950 hover:text-emerald-700 truncate">
-                            {{ reg.user.get_full_name|default:reg.user.username }}
-                        </a>
-                        <div class="text-xs text-slate-500 mt-0.5">
-                            @{{ reg.user.username }}
-                        </div>
+                        {% if request.user.is_superadmin_level %}
+                            <a href="{% url 'admin_user_profile' reg.user.id %}"
+                               class="block text-sm font-black text-slate-950 hover:text-emerald-700 truncate">
+                                {{ reg.user.get_full_name|default:reg.user.username }}
+                            </a>
+                        {% else %}
+                            <div class="block text-sm font-black text-slate-950 truncate">
+                                {{ reg.user.get_full_name|default:reg.user.username }}
+                            </div>
+                        {% endif %}
+
+                        {% if request.user.is_admin_level %}
+                            <div class="text-xs text-slate-500 mt-0.5">
+                                @{{ reg.user.username }}
+                            </div>
+                        {% endif %}
                     </div>
 
-                    <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-bold
-                        {% if reg.user.player_type == 'core' %}
-                            bg-emerald-50 text-emerald-700
-                        {% elif reg.user.player_type == 'regular' %}
-                            bg-blue-50 text-blue-700
-                        {% elif reg.user.player_type == 'new' %}
-                            bg-slate-100 text-slate-700
-                        {% else %}
-                            bg-red-50 text-red-700
-                        {% endif %}
-                    ">
-                        {{ reg.user.player_type|title }}
-                    </span>
+                    {% if request.user.is_admin_level %}
+                        <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-bold
+                            {% if reg.user.player_type == 'core' %}
+                                bg-emerald-50 text-emerald-700
+                            {% elif reg.user.player_type == 'regular' %}
+                                bg-blue-50 text-blue-700
+                            {% elif reg.user.player_type == 'new' %}
+                                bg-slate-100 text-slate-700
+                            {% else %}
+                                bg-red-50 text-red-700
+                            {% endif %}
+                        ">
+                            {{ reg.user.player_type|title }}
+                        </span>
+                    {% endif %}
                 </div>
 
-                <!-- Move Buttons -->
-                <div class="mt-4 grid grid-cols-5 gap-1.5">
-                    <form method="post" action="{% url 'registration_move' reg.id 'playing' %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            title="Move to Playing"
-                            class="w-full rounded-full bg-emerald-50 px-2 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">
-                            P
-                        </button>
-                    </form>
+                {% if request.user.is_admin_level %}
+                    <!-- Move Buttons -->
+                    <div class="mt-4 grid grid-cols-5 gap-1.5">
+                        <form method="post" action="{% url 'registration_move' reg.id 'playing' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                title="Move to Playing"
+                                class="w-full rounded-full bg-emerald-50 px-2 py-1.5 text-xs font-black text-emerald-700 hover:bg-emerald-100">
+                                P
+                            </button>
+                        </form>
 
-                    <form method="post" action="{% url 'registration_move' reg.id 'waiting' %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            title="Move to Waiting"
-                            class="w-full rounded-full bg-amber-50 px-2 py-1.5 text-xs font-black text-amber-700 hover:bg-amber-100">
-                            W
-                        </button>
-                    </form>
+                        <form method="post" action="{% url 'registration_move' reg.id 'waiting' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                title="Move to Waiting"
+                                class="w-full rounded-full bg-amber-50 px-2 py-1.5 text-xs font-black text-amber-700 hover:bg-amber-100">
+                                W
+                            </button>
+                        </form>
 
-                    <form method="post" action="{% url 'registration_move' reg.id 'backup' %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            title="Move to Backup"
-                            class="w-full rounded-full bg-red-50 px-2 py-1.5 text-xs font-black text-red-700 hover:bg-red-100">
-                            B
-                        </button>
-                    </form>
+                        <form method="post" action="{% url 'registration_move' reg.id 'backup' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                title="Move to Backup"
+                                class="w-full rounded-full bg-red-50 px-2 py-1.5 text-xs font-black text-red-700 hover:bg-red-100">
+                                B
+                            </button>
+                        </form>
 
-                    <form method="post" action="{% url 'registration_move' reg.id 'interested' %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            title="Move to Interested"
-                            class="w-full rounded-full bg-blue-50 px-2 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-100">
-                            I
-                        </button>
-                    </form>
+                        <form method="post" action="{% url 'registration_move' reg.id 'interested' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                title="Move to Interested"
+                                class="w-full rounded-full bg-blue-50 px-2 py-1.5 text-xs font-black text-blue-700 hover:bg-blue-100">
+                                I
+                            </button>
+                        </form>
 
-                    <form method="post" action="{% url 'registration_delete' reg.id %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            title="Remove player"
-                            onclick="return confirm('Kick this player?')"
-                            class="w-full rounded-full bg-slate-200 px-2 py-1.5 text-xs font-black text-slate-700 hover:bg-red-100 hover:text-red-700">
-                            X
-                        </button>
-                    </form>
-                </div>
+                        <form method="post" action="{% url 'registration_delete' reg.id %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                title="Remove player"
+                                onclick="return confirm('Kick this player?')"
+                                class="w-full rounded-full bg-slate-200 px-2 py-1.5 text-xs font-black text-slate-700 hover:bg-red-100 hover:text-red-700">
+                                X
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
             </div>
         {% empty %}
             <div class="rounded-3xl bg-slate-50 border border-dashed border-slate-200 p-5 text-center text-sm text-slate-400">

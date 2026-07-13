@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Standing Orders{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+        <div>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-wide">
+                Automation Control
+            </p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                Standing Orders
+            </h1>
+            <p class="mt-2 text-slate-500">
+                Schedule recurring game creation and automatic weekly limit changes.
+            </p>
+        </div>
+
+        <a href="{% url 'standing_order_create' %}"
+           class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+            + New Standing Order
+        </a>
+    </div>
+
+
+    <!-- Orders -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        {% if standing_orders %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-5 py-4 text-left font-black text-slate-600">Name</th>
+                            <th class="px-5 py-4 text-left font-black text-slate-600">Action</th>
+                            <th class="px-5 py-4 text-left font-black text-slate-600">Runs</th>
+                            <th class="px-5 py-4 text-left font-black text-slate-600">Next Run</th>
+                            <th class="px-5 py-4 text-left font-black text-slate-600">Status</th>
+                            <th class="px-5 py-4 text-right font-black text-slate-600">Open</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-slate-100">
+                        {% for order in standing_orders %}
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-5 py-4">
+                                    <div class="font-black text-slate-950">
+                                        {{ order.name }}
+                                    </div>
+                                    <div class="text-xs text-slate-400 mt-1">
+                                        Created {{ order.created_at|date:"d M Y" }}
+                                    </div>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold
+                                        {% if order.action == 'create_event' %}
+                                            bg-emerald-50 text-emerald-700
+                                        {% else %}
+                                            bg-purple-50 text-purple-700
+                                        {% endif %}
+                                    ">
+                                        {{ order.action_label }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-4 text-slate-700 font-semibold">
+                                    {{ order.run_day_label }} {{ order.run_time|time:"g:i A" }}
+                                </td>
+
+                                <td class="px-5 py-4 text-slate-700">
+                                    {% if order.next_run_at %}
+                                        {{ order.next_run_at|date:"d M Y, g:i A" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    {% if order.is_active %}
+                                        <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                            Active
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                                            Paused
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-5 py-4 text-right">
+                                    <a href="{% url 'standing_order_detail' order.id %}"
+                                       class="inline-flex items-center justify-center px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-emerald-50 hover:text-emerald-700">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-10 text-center">
+                <div class="text-4xl mb-3">🗓️</div>
+                <h2 class="text-xl font-black text-slate-950">
+                    No standing orders yet
+                </h2>
+                <p class="mt-2 text-sm text-slate-500">
+                    Create your first recurring rule and let the robot clerk do the boring work.
+                </p>
+                <a href="{% url 'standing_order_create' %}"
+                   class="mt-5 inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                    + Create Standing Order
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
