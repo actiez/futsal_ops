@@ -10,6 +10,11 @@ from .forms import StandingOrderForm
 from .models import StandingOrder, StandingOrderRunLog
 from .services import run_standing_order, refresh_next_run_at
 
+from django.conf import settings
+from django.http import JsonResponse
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 class StandingOrderListView(AdminRequiredMixin, ListView):
     model = StandingOrder
@@ -115,3 +120,40 @@ class StandingOrderToggleActiveView(AdminRequiredMixin, View):
             messages.info(request, "Standing order paused.")
 
         return redirect("standing_order_detail", pk=standing_order.pk)
+    
+@method_decorator(csrf_exempt, name="dispatch")
+class RunDueStandingOrdersView(View):
+    def post(self, request):
+        expected_token = getattr(settings, "STANDING_ORDER_CRON_TOKEN", "")
+        provided_token = (
+            request.POST.get("token")
+            or request.headers.get("X-Standing-Order-Token")
+        )
+
+        if not expected_token or provided_token != expected_token:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": "Unauthorized",
+                },
+                status=403,
+            )
+
+        from .services import run_due_standing_orders
+
+        logs = run_due_standing_orders()
+
+        return JsonResponse({
+            "ok": True,
+            "run_count": len(logs),
+            "logs": [
+                {
+                    "standing_order": log.standing_order.name,
+                    "status": log.status,
+                    "message": log.message,
+                    "ran_at": log.ran_at.isoformat(),
+                    "created_event_id": log.created_event_id,
+                }
+                for log in logs
+            ],
+        })

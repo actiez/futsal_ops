@@ -183,3 +183,5 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 AUTHENTICATION_BACKENDS = [
     "accounts.backends.CaseInsensitiveUsernameBackend",
 ]
+
+STANDING_ORDER_CRON_TOKEN = os.environ.get("STANDING_ORDER_CRON_TOKEN", "")
