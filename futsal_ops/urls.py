@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from core.views import aliveagain
 
 def home(request):
     return redirect("/home/")
@@ -15,6 +16,7 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
     path("bot/", include("bot.urls")),
     path("standing-orders/", include("standing_orders.urls")),
+    path("aliveagain/", aliveagain, name="aliveagain"),
 ]
 
 path(
