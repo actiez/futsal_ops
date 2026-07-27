@@ -37,6 +37,7 @@
         {% endif %}
     </div>
 
+
     <!-- Event Cards -->
     <div class="grid grid-cols-1 gap-4">
         {% for event in events %}
@@ -110,6 +111,7 @@
                         </div>
                     </div>
 
+
                     <!-- Actions -->
                     <div class="flex flex-row md:flex-col lg:flex-row gap-2 md:items-end">
                         <a href="{% url 'event_detail' event.id %}"
@@ -124,4 +126,49 @@
                         {% if request.user.is_admin_level %}
                             {% if event.end_datetime <= now and event.status != "cancelled" %}
                                 <a href="{% url 'event_closeout' event.id %}"
-                                   class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emer
+                                   class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                                    Closeout
+                                </a>
+                            {% endif %}
+
+                            <a href="{% url 'event_edit' event.id %}"
+                               class="inline-flex items-center justify-center px-4 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                                Edit
+                            </a>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        {% empty %}
+            <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 text-center">
+                <div class="mx-auto h-14 w-14 rounded-3xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl font-black">
+                    ⚽
+                </div>
+
+                <h2 class="mt-4 text-xl font-black text-slate-950">
+                    No events yet
+                </h2>
+
+                <p class="mt-2 text-slate-500">
+                    {% if request.user.is_admin_level %}
+                        Create your first futsal session to start managing registrations.
+                    {% else %}
+                        No upcoming futsal sessions are available yet.
+                    {% endif %}
+                </p>
+
+                {% if request.user.is_admin_level %}
+                    <div class="mt-6">
+                        <a href="{% url 'event_create' %}"
+                           class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
+                            + Create Event
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
