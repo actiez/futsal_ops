@@ -30,12 +30,12 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-            <a href="{% url 'event_list' %}"
-               class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
-                ← Events
-            </a>
-
             {% if request.user.is_admin_level %}
+                <a href="{% url 'event_list' %}"
+                   class="inline-flex items-center justify-center px-5 py-3 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50">
+                    ← Events
+                </a>
+
                 {% if not registration_closed and event.effective_status != "completed" and event.effective_status != "cancelled" %}
                     <a href="{% url 'registration_add' event.id %}"
                        class="inline-flex items-center justify-center px-5 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700">
@@ -263,19 +263,17 @@
                 {% endif %}
             </div>
         </div>
-    {% endif %}
 
 
-    <!-- Players Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-        {% include "events/_player_column.html" with title="Interested" players=interested_regs %}
-        {% include "events/_player_column.html" with title="Playing" players=playing_regs %}
-        {% include "events/_player_column.html" with title="Waiting" players=waiting_regs %}
-        {% include "events/_player_column.html" with title="Backup" players=backup_regs %}
-    </div>
+        <!-- Players Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+            {% include "events/_player_column.html" with title="Interested" players=interested_regs %}
+            {% include "events/_player_column.html" with title="Playing" players=playing_regs %}
+            {% include "events/_player_column.html" with title="Waiting" players=waiting_regs %}
+            {% include "events/_player_column.html" with title="Backup" players=backup_regs %}
+        </div>
 
 
-    {% if request.user.is_admin_level %}
         <!-- WhatsApp Summary -->
         <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
