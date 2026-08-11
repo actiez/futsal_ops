@@ -140,6 +140,12 @@
                             Registration Closed
                         </span>
                     {% endif %}
+
+                    {% if event.leave_locked %}
+                        <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+                            Leave Locked
+                        </span>
+                    {% endif %}
                 </div>
 
                 <!-- Info Cards -->
@@ -228,6 +234,29 @@
                             </p>
                         </div>
                     {% endif %}
+
+                    <div class="rounded-2xl bg-amber-50 p-4 md:col-span-2 xl:col-span-4">
+                        <div class="text-xs uppercase tracking-wide text-amber-600 font-bold mb-1">
+                            Self-Leaving Rule
+                        </div>
+
+                        {% if event.leave_cutoff_minutes %}
+                            <div class="font-semibold text-amber-900">
+                                Locked {{ event.leave_cutoff_minutes }} minutes before kick-off
+                            </div>
+                            <p class="mt-2 text-xs text-amber-700">
+                                Self-leaving closes at {{ event.leave_cutoff_display }}.
+                                Admins can still remove or manage players manually.
+                            </p>
+                        {% else %}
+                            <div class="font-semibold text-amber-900">
+                                No cutoff
+                            </div>
+                            <p class="mt-2 text-xs text-amber-700">
+                                Players can self-leave until registration closes.
+                            </p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

@@ -15,7 +15,7 @@
                 Edit Event
             </h1>
             <p class="mt-2 text-slate-500">
-                Update the event details, slot settings, privacy, and status.
+                Update the event details, slot settings, privacy, leave cutoff, and status.
             </p>
         </div>
 
@@ -124,6 +124,30 @@
                 {% if form.is_private.errors %}
                     <div class="text-red-600 text-sm mt-2">{{ form.is_private.errors }}</div>
                 {% endif %}
+            </div>
+
+            <div class="rounded-3xl border border-amber-100 bg-amber-50 p-5">
+                <label class="block text-sm font-black text-amber-900 mb-2">
+                    Disable Self-Leaving Before Kick-off
+                </label>
+
+                {{ form.leave_cutoff_minutes }}
+
+                {% if form.leave_cutoff_minutes.errors %}
+                    <div class="text-red-600 text-sm mt-2">
+                        {{ form.leave_cutoff_minutes.errors }}
+                    </div>
+                {% endif %}
+
+                <p class="text-sm text-amber-800 mt-3">
+                    Choose when players can no longer leave the game by themselves.
+                    Admins can still remove or manage players manually.
+                </p>
+
+                <p class="text-xs text-amber-700 mt-2">
+                    Example: if the game starts at 7:00 PM and this is set to 90 minutes,
+                    self-leaving will be locked from 5:30 PM.
+                </p>
             </div>
 
             <div>

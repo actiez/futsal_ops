@@ -1,17 +1,15 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
 
 from accounts.models import User
 from core.mixins import AdminRequiredMixin
-from django.db.models import Q
 from events.models import Event
-
-from django.http import HttpResponse
-
-from datetime import timedelta
 from system_settings.models import SystemSettings
 
 from .forms import EventRegistrationAdminForm
@@ -167,6 +165,7 @@ def get_player_visible_status(registration, event):
         "queue_number": None,
     }
 
+
 def get_weekly_registration_conflict(user, event):
     settings_obj = SystemSettings.get_solo()
 
@@ -197,6 +196,22 @@ def get_weekly_registration_conflict(user, event):
         .first()
     )
 
+
+def get_leave_locked_message(event):
+    if event.leave_cutoff_minutes and event.leave_cutoff_display:
+        return (
+            "Leaving is locked for this game. "
+            f"Self-leaving closed at {event.leave_cutoff_display}, "
+            f"{event.leave_cutoff_minutes} minutes before kick-off. "
+            "Please contact the organiser if you cannot attend."
+        )
+
+    return (
+        "Leaving is locked for this game. "
+        "Please contact the organiser if you cannot attend."
+    )
+
+
 @login_required
 def join_event(request, token):
     event = get_object_or_404(Event, registration_token=token)
@@ -210,7 +225,7 @@ def join_event(request, token):
         .exclude(status=EventRegistration.STATUS_REMOVED)
         .first()
     )
-    
+
     visible_status = get_player_visible_status(existing_registration, event)
 
     if request.method == "POST":
@@ -220,7 +235,7 @@ def join_event(request, token):
             if existing_registration:
                 messages.info(request, "You are already registered for this event.")
                 return redirect("join_event", token=event.registration_token)
-            
+
             weekly_conflict = get_weekly_registration_conflict(request.user, event)
 
             if weekly_conflict:
@@ -250,12 +265,19 @@ def join_event(request, token):
             elif visible_status["label"] == "Waiting":
                 messages.success(
                     request,
-                    f"You are in the waiting list. You are currently #{visible_status['queue_number']} in line. You may be moved into the game if a slot opens."
+                    (
+                        "You are in the waiting list. "
+                        f"You are currently #{visible_status['queue_number']} in line. "
+                        "You may be moved into the game if a slot opens."
+                    ),
                 )
             else:
                 messages.success(
                     request,
-                    "Your status is pending. Slots may be pending final confirmation, or you may move into the waiting list when a slot opens.",
+                    (
+                        "Your status is pending. Slots may be pending final confirmation, "
+                        "or you may move into the waiting list when a slot opens."
+                    ),
                 )
 
             return redirect("join_event", token=event.registration_token)
@@ -263,6 +285,10 @@ def join_event(request, token):
         if action == "leave_warn":
             if not existing_registration:
                 messages.warning(request, "You are not registered for this event.")
+                return redirect("join_event", token=event.registration_token)
+
+            if event.leave_locked:
+                messages.error(request, get_leave_locked_message(event))
                 return redirect("join_event", token=event.registration_token)
 
             return render(
@@ -279,6 +305,10 @@ def join_event(request, token):
         if action == "leave_confirm":
             if not existing_registration:
                 messages.warning(request, "You are not registered for this event.")
+                return redirect("join_event", token=event.registration_token)
+
+            if event.leave_locked:
+                messages.error(request, get_leave_locked_message(event))
                 return redirect("join_event", token=event.registration_token)
 
             remove_registration(existing_registration, changed_by=request.user)

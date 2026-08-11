@@ -20,6 +20,7 @@ SELECT_CLASS = (
 
 CHECKBOX_CLASS = "h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
 
+
 class EventForm(forms.ModelForm):
     event_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS})
@@ -44,6 +45,7 @@ class EventForm(forms.ModelForm):
             "waiting_slots",
             "backup_slots",
             "is_private",
+            "leave_cutoff_minutes",
             "status",
         ]
         widgets = {
@@ -56,11 +58,23 @@ class EventForm(forms.ModelForm):
             "waiting_slots": forms.NumberInput(attrs={"class": INPUT_CLASS}),
             "backup_slots": forms.NumberInput(attrs={"class": INPUT_CLASS}),
             "is_private": forms.CheckboxInput(attrs={"class": CHECKBOX_CLASS}),
+            "leave_cutoff_minutes": forms.Select(attrs={"class": SELECT_CLASS}),
             "status": forms.Select(attrs={"class": SELECT_CLASS}),
+        }
+        labels = {
+            "leave_cutoff_minutes": "Disable self-leaving before kick-off",
+        }
+        help_texts = {
+            "leave_cutoff_minutes": (
+                "Players cannot leave by themselves after this cutoff. "
+                "Admins can still manage players manually."
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["leave_cutoff_minutes"].required = False
 
         if self.instance and self.instance.pk:
             if self.instance.start_datetime:

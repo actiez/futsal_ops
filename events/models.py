@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -6,9 +8,11 @@ import uuid
 import secrets
 import string
 
+
 def generate_event_code():
     alphabet = string.ascii_uppercase + string.digits
     return "EVT-" + "".join(secrets.choice(alphabet) for _ in range(6))
+
 
 class Event(models.Model):
     STATUS_DRAFT = "draft"
@@ -23,6 +27,16 @@ class Event(models.Model):
         (STATUS_FINALIZED, "Finalized"),
         (STATUS_COMPLETED, "Completed"),
         (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    LEAVE_CUTOFF_CHOICES = [
+        (None, "No cutoff"),
+        (30, "30 minutes before"),
+        (60, "60 minutes before"),
+        (90, "90 minutes before"),
+        (120, "120 minutes before"),
+        (150, "150 minutes before"),
+        (180, "180 minutes before"),
     ]
 
     registration_token = models.UUIDField(
@@ -53,7 +67,14 @@ class Event(models.Model):
         default=False,
         help_text="Private events are hidden from the public event list but accessible by registration link.",
     )
-   
+
+    leave_cutoff_minutes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        choices=LEAVE_CUTOFF_CHOICES,
+        help_text="Players cannot self-leave after this cutoff before kick-off.",
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -99,6 +120,32 @@ class Event(models.Model):
         return f"{start} to {end}"
 
     @property
+    def leave_cutoff_datetime(self):
+        if not self.leave_cutoff_minutes:
+            return None
+
+        return self.start_datetime - timedelta(minutes=self.leave_cutoff_minutes)
+
+    @property
+    def leave_cutoff_display(self):
+        cutoff = self.leave_cutoff_datetime
+
+        if not cutoff:
+            return ""
+
+        local_cutoff = timezone.localtime(cutoff)
+        return local_cutoff.strftime("%I:%M %p").lstrip("0")
+
+    @property
+    def leave_locked(self):
+        cutoff = self.leave_cutoff_datetime
+
+        if not cutoff:
+            return False
+
+        return timezone.now() >= cutoff
+
+    @property
     def effective_status(self):
         from registrations.models import EventRegistration
 
@@ -132,7 +179,8 @@ class Event(models.Model):
             "completed": "Completed",
         }
         return labels.get(self.effective_status, self.effective_status)
-    
+
+
 class EventCloseout(models.Model):
     STATUS_PENDING = "pending"
     STATUS_CLOSED_MANUAL = "closed_manual"
