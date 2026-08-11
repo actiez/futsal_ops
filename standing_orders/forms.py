@@ -4,6 +4,12 @@ from .models import StandingOrder
 from .services import refresh_next_run_at
 
 
+FIELD_CLASS = (
+    "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm "
+    "focus:outline-none focus:ring-2 focus:ring-emerald-500"
+)
+
+
 class StandingOrderForm(forms.ModelForm):
     weekly_limit_enabled = forms.TypedChoiceField(
         required=False,
@@ -19,7 +25,7 @@ class StandingOrderForm(forms.ModelForm):
         ),
         empty_value=None,
         widget=forms.Select(attrs={
-            "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+            "class": FIELD_CLASS,
         }),
     )
 
@@ -42,57 +48,77 @@ class StandingOrderForm(forms.ModelForm):
             "waiting_slots",
             "backup_slots",
             "is_private",
+            "leave_cutoff_minutes",
 
             "weekly_limit_enabled",
         ]
 
         widgets = {
             "name": forms.TextInput(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
                 "placeholder": "e.g. Create Wednesday Futsal",
             }),
             "action": forms.Select(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "frequency": forms.Select(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "run_day_of_week": forms.Select(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "run_time": forms.TimeInput(attrs={
                 "type": "time",
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "event_day_of_week": forms.Select(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "event_start_time": forms.TimeInput(attrs={
                 "type": "time",
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "event_end_time": forms.TimeInput(attrs={
                 "type": "time",
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "location": forms.TextInput(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
                 "placeholder": "e.g. CCK Sports Hall",
             }),
             "amount_payable": forms.NumberInput(attrs={
                 "step": "0.01",
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "playing_slots": forms.NumberInput(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "waiting_slots": forms.NumberInput(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
             }),
             "backup_slots": forms.NumberInput(attrs={
-                "class": "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500",
+                "class": FIELD_CLASS,
+            }),
+            "leave_cutoff_minutes": forms.Select(attrs={
+                "class": FIELD_CLASS,
             }),
         }
+
+        labels = {
+            "leave_cutoff_minutes": "Disable self-leaving before kick-off",
+        }
+
+        help_texts = {
+            "leave_cutoff_minutes": (
+                "Events created by this standing order will use this self-leaving cutoff. "
+                "Admins can still remove or manage players manually."
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["leave_cutoff_minutes"].required = False
 
     def clean(self):
         cleaned_data = super().clean()

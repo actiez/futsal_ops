@@ -101,6 +101,7 @@ def run_create_event_order(standing_order):
         waiting_slots=standing_order.waiting_slots,
         backup_slots=standing_order.backup_slots,
         is_private=standing_order.is_private,
+        leave_cutoff_minutes=standing_order.leave_cutoff_minutes,
         created_by=standing_order.created_by,
     )
 

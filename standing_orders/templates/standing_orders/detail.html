@@ -160,6 +160,29 @@
                         {% if standing_order.is_private %}Yes{% else %}No{% endif %}
                     </div>
                 </div>
+
+                <div class="rounded-2xl bg-amber-50 p-4 md:col-span-2 xl:col-span-4">
+                    <div class="text-xs uppercase tracking-wide text-amber-600 font-bold mb-1">
+                        Self-Leaving Rule
+                    </div>
+
+                    {% if standing_order.leave_cutoff_minutes %}
+                        <div class="font-semibold text-amber-900">
+                            Locked {{ standing_order.leave_cutoff_minutes }} minutes before kick-off
+                        </div>
+                        <p class="mt-2 text-xs text-amber-700">
+                            Events created by this standing order will prevent players from self-leaving after the cutoff.
+                            Admins can still remove or manage players manually.
+                        </p>
+                    {% else %}
+                        <div class="font-semibold text-amber-900">
+                            No cutoff
+                        </div>
+                        <p class="mt-2 text-xs text-amber-700">
+                            Events created by this standing order will not have a self-leaving cutoff.
+                        </p>
+                    {% endif %}
+                </div>
             {% else %}
                 <div class="rounded-2xl bg-slate-50 p-4">
                     <div class="text-xs uppercase tracking-wide text-slate-400 font-bold mb-1">Weekly Limit Target</div>

@@ -38,9 +38,23 @@ class StandingOrder(models.Model):
         (DAY_SUNDAY, "Sunday"),
     ]
 
+    LEAVE_CUTOFF_CHOICES = [
+        (None, "No cutoff"),
+        (30, "30 minutes before"),
+        (60, "60 minutes before"),
+        (90, "90 minutes before"),
+        (120, "120 minutes before"),
+        (150, "150 minutes before"),
+        (180, "180 minutes before"),
+    ]
+
     name = models.CharField(max_length=120)
     action = models.CharField(max_length=30, choices=ACTION_CHOICES)
-    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, default=FREQUENCY_WEEKLY)
+    frequency = models.CharField(
+        max_length=20,
+        choices=FREQUENCY_CHOICES,
+        default=FREQUENCY_WEEKLY,
+    )
 
     run_day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
     run_time = models.TimeField()
@@ -48,15 +62,31 @@ class StandingOrder(models.Model):
     is_active = models.BooleanField(default=True)
 
     # For create_event action
-    event_day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES, null=True, blank=True)
+    event_day_of_week = models.PositiveSmallIntegerField(
+        choices=DAY_CHOICES,
+        null=True,
+        blank=True,
+    )
     event_start_time = models.TimeField(null=True, blank=True)
     event_end_time = models.TimeField(null=True, blank=True)
     location = models.CharField(max_length=255, blank=True)
-    amount_payable = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    amount_payable = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     playing_slots = models.PositiveIntegerField(null=True, blank=True)
     waiting_slots = models.PositiveIntegerField(null=True, blank=True)
     backup_slots = models.PositiveIntegerField(null=True, blank=True)
     is_private = models.BooleanField(default=False)
+
+    leave_cutoff_minutes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        choices=LEAVE_CUTOFF_CHOICES,
+        help_text="Events created by this standing order will lock self-leaving after this cutoff before kick-off.",
+    )
 
     # For weekly limit action
     weekly_limit_enabled = models.BooleanField(null=True, blank=True)
@@ -94,6 +124,15 @@ class StandingOrder(models.Model):
         if self.event_day_of_week is None:
             return ""
         return dict(self.DAY_CHOICES).get(self.event_day_of_week, self.event_day_of_week)
+
+    @property
+    def leave_cutoff_label(self):
+        if not self.leave_cutoff_minutes:
+            return "No cutoff"
+        return dict(self.LEAVE_CUTOFF_CHOICES).get(
+            self.leave_cutoff_minutes,
+            f"{self.leave_cutoff_minutes} minutes before",
+        )
 
     def calculate_next_run_at(self, from_datetime=None):
         from_datetime = from_datetime or timezone.now()

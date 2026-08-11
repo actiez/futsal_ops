@@ -215,6 +215,33 @@
                     {% if form.is_private.errors %}
                         <p class="mt-2 text-sm text-red-600">{{ form.is_private.errors|striptags }}</p>
                     {% endif %}
+                    <p class="mt-2 text-xs text-slate-500">
+                        Private events are hidden from browsing but remain accessible by registration link.
+                    </p>
+                </div>
+
+                <div class="md:col-span-2 rounded-3xl border border-amber-100 bg-amber-50 p-5">
+                    <label class="block text-sm font-black text-amber-900 mb-2">
+                        Disable Self-Leaving Before Kick-off
+                    </label>
+
+                    {{ form.leave_cutoff_minutes }}
+
+                    {% if form.leave_cutoff_minutes.errors %}
+                        <p class="mt-2 text-sm text-red-600">
+                            {{ form.leave_cutoff_minutes.errors|striptags }}
+                        </p>
+                    {% endif %}
+
+                    <p class="mt-3 text-sm text-amber-800">
+                        Events created by this standing order will use this self-leaving cutoff.
+                        Admins can still remove or manage players manually.
+                    </p>
+
+                    <p class="mt-2 text-xs text-amber-700">
+                        Example: if the game starts at 7:00 PM and this is set to 90 minutes,
+                        self-leaving will be locked from 5:30 PM.
+                    </p>
                 </div>
             </div>
         </div>
