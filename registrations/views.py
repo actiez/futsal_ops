@@ -312,7 +312,7 @@ def join_event(request, token):
                 return redirect("join_event", token=event.registration_token)
 
             remove_registration(existing_registration, changed_by=request.user)
-            rebalance_event_slots(event, changed_by=request.user)
+            rebalance_event_slots(event, changed_by=None)
 
             messages.success(
                 request,

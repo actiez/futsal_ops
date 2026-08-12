@@ -7,7 +7,9 @@ def get_next_sequence_number(event):
         .order_by("-sequence_number")
         .first()
     )
+
     return 1 if not last_registration else last_registration.sequence_number + 1
+
 
 def get_next_waiting_sequence_number(event):
     last_waiting = (
@@ -22,11 +24,13 @@ def get_next_waiting_sequence_number(event):
 
     return get_next_sequence_number(event)
 
+
 def has_playing_slot_available(event):
     playing_count = EventRegistration.objects.filter(
         event=event,
         status=EventRegistration.STATUS_PLAYING,
     ).count()
+
     return playing_count < event.playing_slots
 
 
@@ -35,18 +39,22 @@ def has_waiting_slot_available(event):
         event=event,
         status=EventRegistration.STATUS_WAITING,
     ).count()
+
     return waiting_count < event.waiting_slots
 
 
 def get_default_status_for_user(event, user):
+    if user.player_type == user.PLAYER_NAUGHTY:
+        return EventRegistration.STATUS_BACKUP
+
     if user.player_type == user.PLAYER_CORE:
         if has_playing_slot_available(event):
             return EventRegistration.STATUS_PLAYING
 
-        return EventRegistration.STATUS_INTERESTED
+        if has_waiting_slot_available(event):
+            return EventRegistration.STATUS_WAITING
 
-    if user.player_type == user.PLAYER_NAUGHTY:
-        return EventRegistration.STATUS_BACKUP
+        return EventRegistration.STATUS_INTERESTED
 
     return EventRegistration.STATUS_INTERESTED
 
@@ -63,6 +71,10 @@ def register_user_for_event(event, user, changed_by=None):
         old_status = existing.status
         existing.status = default_status
         existing.sequence_number = get_next_sequence_number(event)
+
+        if default_status == EventRegistration.STATUS_WAITING:
+            existing.sequence_number = get_next_waiting_sequence_number(event)
+
         existing.save()
 
         EventStatusLog.objects.create(
@@ -74,10 +86,15 @@ def register_user_for_event(event, user, changed_by=None):
 
         return existing, True
 
+    sequence_number = get_next_sequence_number(event)
+
+    if default_status == EventRegistration.STATUS_WAITING:
+        sequence_number = get_next_waiting_sequence_number(event)
+
     registration = EventRegistration.objects.create(
         event=event,
         user=user,
-        sequence_number=get_next_sequence_number(event),
+        sequence_number=sequence_number,
         status=default_status,
     )
 
@@ -90,12 +107,13 @@ def register_user_for_event(event, user, changed_by=None):
 
     return registration, True
 
+
 def auto_promote_waiting(event, changed_by=None):
     while has_playing_slot_available(event):
         next_waiting = (
             EventRegistration.objects
             .filter(event=event, status=EventRegistration.STATUS_WAITING)
-            .order_by("sequence_number")
+            .order_by("sequence_number", "id")
             .first()
         )
 
@@ -114,53 +132,17 @@ def auto_promote_waiting(event, changed_by=None):
         )
 
 
-def auto_fill_waiting_from_interested(event, changed_by=None):
-    while has_waiting_slot_available(event):
-        # Core players get priority only when filling Waiting from Interested.
-        # Within core players, keep strict sequence order.
-        next_interested = (
-            EventRegistration.objects
-            .filter(
-                event=event,
-                status=EventRegistration.STATUS_INTERESTED,
-                user__player_type="core",
-            )
-            .order_by("sequence_number", "id")
-            .first()
-        )
-
-        # If no core players are interested, fill by strict sequence order
-        # among regular/new players.
-        if not next_interested:
-            next_interested = (
-                EventRegistration.objects
-                .filter(
-                    event=event,
-                    status=EventRegistration.STATUS_INTERESTED,
-                    user__player_type__in=["regular", "new"],
-                )
-                .order_by("sequence_number", "id")
-                .first()
-            )
-
-        if not next_interested:
-            break
-
-        old_status = next_interested.status
-        next_interested.status = EventRegistration.STATUS_WAITING
-        next_interested.sequence_number = get_next_waiting_sequence_number(event)
-        next_interested.save()
-
-        EventStatusLog.objects.create(
-            registration=next_interested,
-            old_status=old_status,
-            new_status=EventRegistration.STATUS_WAITING,
-            changed_by=changed_by,
-        )
-
 def rebalance_event_slots(event, changed_by=None):
+    """
+    Conservative rebalance rule:
+
+    - Waiting players can auto-promote to Playing when a Playing slot opens.
+    - Interested players must NOT auto-move to Waiting or Playing.
+    - Regular/New players stay Interested unless admin manually moves them.
+    - Core players are handled automatically only when they join/rejoin.
+    - Naughty players stay Backup unless admin manually changes them.
+    """
     auto_promote_waiting(event, changed_by=changed_by)
-    auto_fill_waiting_from_interested(event, changed_by=changed_by)
 
 
 def update_registration_status(registration, new_status, changed_by=None):
@@ -171,7 +153,10 @@ def update_registration_status(registration, new_status, changed_by=None):
 
     registration.status = new_status
 
-    if new_status == EventRegistration.STATUS_WAITING and old_status != EventRegistration.STATUS_WAITING:
+    if (
+        new_status == EventRegistration.STATUS_WAITING
+        and old_status != EventRegistration.STATUS_WAITING
+    ):
         registration.sequence_number = get_next_waiting_sequence_number(registration.event)
 
     registration.save()
@@ -184,6 +169,7 @@ def update_registration_status(registration, new_status, changed_by=None):
     )
 
     return registration, "updated"
+
 
 def remove_registration(registration, changed_by=None):
     old_status = registration.status
