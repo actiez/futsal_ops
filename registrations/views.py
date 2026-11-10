@@ -167,6 +167,10 @@ def get_player_visible_status(registration, event):
 
 
 def get_weekly_registration_conflict(user, event):
+    # Volunteers are exempt from the weekly registration limit.
+    if user.player_type == user.PLAYER_VOLUNTEER:
+        return None
+    
     settings_obj = SystemSettings.get_solo()
 
     if not settings_obj.only_allow_once_per_week_registration:

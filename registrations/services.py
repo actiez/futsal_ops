@@ -1,3 +1,4 @@
+
 from registrations.models import EventRegistration, EventStatusLog
 
 
@@ -47,7 +48,10 @@ def get_default_status_for_user(event, user):
     if user.player_type == user.PLAYER_NAUGHTY:
         return EventRegistration.STATUS_BACKUP
 
-    if user.player_type == user.PLAYER_CORE:
+    if user.player_type in {
+        user.PLAYER_CORE,
+        user.PLAYER_VOLUNTEER,
+    }:
         if has_playing_slot_available(event):
             return EventRegistration.STATUS_PLAYING
 
@@ -60,7 +64,10 @@ def get_default_status_for_user(event, user):
 
 
 def register_user_for_event(event, user, changed_by=None):
-    existing = EventRegistration.objects.filter(event=event, user=user).first()
+    existing = EventRegistration.objects.filter(
+        event=event,
+        user=user,
+    ).first()
 
     if existing and existing.status != EventRegistration.STATUS_REMOVED:
         return existing, False
@@ -112,7 +119,10 @@ def auto_promote_waiting(event, changed_by=None):
     while has_playing_slot_available(event):
         next_waiting = (
             EventRegistration.objects
-            .filter(event=event, status=EventRegistration.STATUS_WAITING)
+            .filter(
+                event=event,
+                status=EventRegistration.STATUS_WAITING,
+            )
             .order_by("sequence_number", "id")
             .first()
         )
@@ -134,13 +144,13 @@ def auto_promote_waiting(event, changed_by=None):
 
 def rebalance_event_slots(event, changed_by=None):
     """
-    Conservative rebalance rule:
+    Conservative rebalance rules:
 
-    - Waiting players can auto-promote to Playing when a Playing slot opens.
-    - Interested players must NOT auto-move to Waiting or Playing.
-    - Regular/New players stay Interested unless admin manually moves them.
-    - Core players are handled automatically only when they join/rejoin.
-    - Naughty players stay Backup unless admin manually changes them.
+    - Waiting players can auto-promote to Playing when a slot opens.
+    - Interested players must not automatically move to Waiting or Playing.
+    - Regular/New players stay Interested unless an admin moves them.
+    - Core/Volunteer players receive priority when joining or rejoining.
+    - Naughty players default to Backup.
     """
     auto_promote_waiting(event, changed_by=changed_by)
 
@@ -157,7 +167,9 @@ def update_registration_status(registration, new_status, changed_by=None):
         new_status == EventRegistration.STATUS_WAITING
         and old_status != EventRegistration.STATUS_WAITING
     ):
-        registration.sequence_number = get_next_waiting_sequence_number(registration.event)
+        registration.sequence_number = get_next_waiting_sequence_number(
+            registration.event
+        )
 
     registration.save()
 

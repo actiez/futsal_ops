@@ -1,3 +1,4 @@
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -16,17 +17,29 @@ class User(AbstractUser):
     PLAYER_NEW = "new"
     PLAYER_REGULAR = "regular"
     PLAYER_CORE = "core"
+    PLAYER_VOLUNTEER = "volunteer"
     PLAYER_NAUGHTY = "naughty"
 
     PLAYER_TYPE_CHOICES = [
         (PLAYER_NEW, "New"),
         (PLAYER_REGULAR, "Regular"),
         (PLAYER_CORE, "Core"),
+        (PLAYER_VOLUNTEER, "Volunteer"),
         (PLAYER_NAUGHTY, "Naughty"),
     ]
 
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_USER)
-    player_type = models.CharField(max_length=20, choices=PLAYER_TYPE_CHOICES, default=PLAYER_NEW)
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_USER,
+    )
+
+    player_type = models.CharField(
+        max_length=20,
+        choices=PLAYER_TYPE_CHOICES,
+        default=PLAYER_NEW,
+    )
+
     mobile_number = models.CharField(max_length=30, blank=True)
     games_played_count = models.PositiveIntegerField(default=0)
     email_verified = models.BooleanField(default=False)
@@ -34,10 +47,12 @@ class User(AbstractUser):
 
     def is_admin_level(self):
         return self.is_authenticated and (
-            self.is_superuser or self.role in {self.ROLE_ADMIN, self.ROLE_SUPERADMIN}
-        ) 
+            self.is_superuser
+            or self.role in {self.ROLE_ADMIN, self.ROLE_SUPERADMIN}
+        )
 
     def is_superadmin_level(self):
         return self.is_authenticated and (
-            self.is_superuser or self.role == self.ROLE_SUPERADMIN
+            self.is_superuser
+            or self.role == self.ROLE_SUPERADMIN
         )
