@@ -1,4 +1,5 @@
 from django.urls import path
+from .calendar import download_event_calendar
 
 from .views import (
     EventListView,
@@ -22,4 +23,9 @@ urlpatterns = [
         ToggleWeeklyRegistrationLimitView.as_view(),
         name="toggle_weekly_limit",
     ),
+    path(
+    "calendar/<uuid:token>/",
+    download_event_calendar,
+    name="event_calendar",
+),
 ]
